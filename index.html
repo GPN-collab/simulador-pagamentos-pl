@@ -7,6 +7,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
   <!-- html2canvas: biblioteca externa usada para gerar imagem PNG das condições de pagamento -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -369,6 +371,27 @@
     try { const r = localStorage.getItem(STORAGE_KEY); return r ? JSON.parse(r) : DEFAULTS; }
     catch { return DEFAULTS; }
   }
+
+  // Firebase — sincronização em tempo real com o portal admin
+  // Preencha com os valores do seu projeto Firebase (mesmo do admin.html)
+  const firebaseConfig = {
+    apiKey: "AIzaSyDemUzzULetjKUikLEYmE6TqdoSwTpNQbU",
+    authDomain: "simulador-pagamento-pl.firebaseapp.com",
+    projectId: "simulador-pagamento-pl",
+    storageBucket: "simulador-pagamento-pl.firebasestorage.app",
+    messagingSenderId: "726755271319",
+    appId: "1:726755271319:web:71431b70731bcbeb713fd2"
+  };
+  firebase.initializeApp(firebaseConfig);
+  firebase.firestore().collection('configs').doc('pl_config')
+    .onSnapshot(snap => {
+      if (snap.exists) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(snap.data()));
+        reloadCfg();
+        const raw = document.getElementById('valor').value;
+        if (raw && raw !== '0,00') atualizar();
+      }
+    }, () => {});
 
   // Variáveis globais que guardam os fatores ativos.
   // Recarregadas a cada simulação para pegar eventuais atualizações do admin.

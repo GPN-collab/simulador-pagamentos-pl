@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Portal Admin — Prima Linea</title>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -466,10 +468,21 @@
   // Antes do deploy em produção, implementar autenticação no servidor.
   const CREDS = { user: 'Admin', pass: 'Senha' };
 
-  // Chave usada para salvar/ler configurações no localStorage do navegador.
-  // O simulador front-end (index.html) lê esta mesma chave — ambos precisam
-  // estar no mesmo navegador/dispositivo para compartilhar os valores.
   const STORAGE_KEY = 'pl_config';
+
+  // ── Firebase ─────────────────────────────────────────────────────────────────
+  // Preencha com os valores do seu projeto em console.firebase.google.com
+  const firebaseConfig = {
+    apiKey: "AIzaSyDemUzzULetjKUikLEYmE6TqdoSwTpNQbU",
+    authDomain: "simulador-pagamento-pl.firebaseapp.com",
+    projectId: "simulador-pagamento-pl",
+    storageBucket: "simulador-pagamento-pl.firebasestorage.app",
+    messagingSenderId: "726755271319",
+    appId: "1:726755271319:web:71431b70731bcbeb713fd2"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const CONFIG_DOC = firebase.firestore().collection('configs').doc('pl_config');
+  let _cachedCfg = null;
 
   // ── Valores padrão ───────────────────────────────────────────────────────────
   // Estes valores vêm da planilha oficial do Santander (Mega Planilha Prima Linea).
@@ -588,14 +601,14 @@
   }
 
   // ── Autenticação ─────────────────────────────────────────────────────────────
-  function doLogin() {
+  async function doLogin() {
     const u = document.getElementById('login-user').value.trim();
     const p = document.getElementById('login-pass').value;
     const err = document.getElementById('login-err');
     if (u === CREDS.user && p === CREDS.pass) {
       document.getElementById('login-screen').style.display = 'none';
       document.getElementById('admin-screen').style.display = 'block';
-      loadForm(); // carrega os valores salvos nos campos do formulário
+      await loadForm();
       err.classList.remove('show');
     } else {
       err.classList.add('show');
@@ -638,22 +651,34 @@
     el.style.display = 'flex';
   }
 
-  // ── Persistência (localStorage) ──────────────────────────────────────────────
-  // Os valores salvos ficam no navegador do dispositivo onde o admin foi usado.
-  // O simulador (index.html) lê estes mesmos dados se aberto no mesmo navegador.
-  // Para sincronizar entre dispositivos, seria necessário um servidor backend.
+  // ── Persistência (Firebase + localStorage como cache offline) ────────────────
   function getConfig() {
+    if (_cachedCfg) return _cachedCfg;
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       return raw ? JSON.parse(raw) : JSON.parse(JSON.stringify(DEFAULTS));
     } catch { return JSON.parse(JSON.stringify(DEFAULTS)); }
   }
 
+  async function _syncFromFirestore() {
+    try {
+      const snap = await CONFIG_DOC.get();
+      if (snap.exists) {
+        _cachedCfg = snap.data();
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(_cachedCfg));
+      } else {
+        _cachedCfg = _cachedCfg || getConfig();
+      }
+    } catch { _cachedCfg = _cachedCfg || getConfig(); }
+    return _cachedCfg;
+  }
+
   // ── Carrega o formulário ─────────────────────────────────────────────────────
   // Preenche todas as colunas "Anterior" e "Atual" com os valores salvos.
   // Os campos "Novo valor" ficam em branco — o usuário preenche apenas o que quer alterar.
   // Chamado ao fazer login e após cada salvamento.
-  function loadForm() {
+  async function loadForm() {
+    await _syncFromFirestore();
     const cfg = getConfig();
     showUpdateNotice(cfg._updatedAt ? new Date(cfg._updatedAt) : null);
 
@@ -750,7 +775,7 @@
   // Lê todos os campos "Novo valor". Se o campo estiver em branco, mantém o valor atual.
   // Guarda os valores anteriores em _prev para exibir na coluna "Anterior".
   // Após salvar, atualiza o formulário para refletir os novos valores.
-  function salvar() {
+  async function salvar() {
     if (!confirm('Você tem certeza que deseja alterar estes valores?')) return;
 
     const cur = getConfig(); // lê os valores atuais antes de sobrescrever
@@ -803,9 +828,16 @@
       cartao: cur.cartao
     };
 
+    _cachedCfg = cfg;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg));
+    try {
+      await CONFIG_DOC.set(cfg);
+    } catch(e) {
+      showToast('Erro ao salvar na nuvem. Verifique a conexão.', true);
+      return;
+    }
     buildLiquidoTable(cfg);
-    loadForm(); // atualiza as colunas Anterior/Atual na tela
+    await loadForm();
     document.querySelectorAll('.num-input.changed').forEach(el => el.classList.remove('changed'));
 
     const ts = formatTS(now);
@@ -818,10 +850,13 @@
   // ── Reset para padrões ───────────────────────────────────────────────────────
   // Restaura todos os valores para os defaults da planilha original.
   // Mantido no código mas sem botão na interface (removido a pedido).
-  function resetDefaults() {
+  async function resetDefaults() {
     if (!confirm('Restaurar todas as taxas para os valores padrão da planilha?')) return;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(JSON.parse(JSON.stringify(DEFAULTS))));
-    loadForm();
+    const defaults = JSON.parse(JSON.stringify(DEFAULTS));
+    _cachedCfg = defaults;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(defaults));
+    try { await CONFIG_DOC.set(defaults); } catch(e) {}
+    await loadForm();
     showToast('Padrões restaurados');
   }
 
