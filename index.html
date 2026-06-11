@@ -127,8 +127,8 @@
     }
     .date-cal-btn:hover { color: var(--copper); }
     .date-native {
-      position: absolute; width: 1px; height: 1px;
-      opacity: 0; pointer-events: none; overflow: hidden;
+      position: absolute; right: 0; top: 0; bottom: 0;
+      width: 2.5rem; opacity: 0; cursor: pointer; z-index: 1;
     }
     .date-error { font-size: 0.68rem; color: #C0392B; display: none; margin-top: -0.2rem; }
     .date-error.visible { display: block; }
@@ -723,26 +723,11 @@
   // O input nativo (type="date") abre o seletor do sistema operacional;
   // quando o usuário escolhe uma data, o campo de texto visível é atualizado.
   function bindNativePicker(textId, nativeId) {
-    const txt = document.getElementById(textId);
     const nat = document.getElementById(nativeId);
-    const btn = txt.closest('.date-wrapper').querySelector('.date-cal-btn');
-    let _openedAt = 0;
-
-    btn.addEventListener('click', function(e) {
-      e.preventDefault();
-      if (Date.now() - _openedAt < 200) return;
-      _openedAt = Date.now();
-      nat.style.pointerEvents = 'auto';
-      try { nat.showPicker(); } catch(_) { nat.click(); }
-    });
-
-    nat.addEventListener('blur', function() {
-      nat.style.pointerEvents = 'none';
-      _openedAt = Date.now();
-    });
-
+    const txt = document.getElementById(textId);
+    // Input nativo sobrepõe o botão de calendário — clique vai direto para o picker
+    // sem precisar de showPicker(), compatível com Safari/iOS
     nat.addEventListener('change', function() {
-      nat.style.pointerEvents = 'none';
       if(!nat.value) return;
       const [y,m,d] = nat.value.split('-');
       txt.value = `${d}/${m}/${y}`;
