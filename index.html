@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulador de Pagamento — Prima Linea</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <!-- html2canvas: biblioteca externa usada para gerar imagem PNG das condições de pagamento -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* Paleta de cores da marca Prima Linea */
+    :root {
+      --cream:      #F9F6F2;
+      --cream-dark: #F0EAE1;
+      --cream-mid:  #EDE6DC;
+      --copper:     #A67B5B;
+      --copper-dk:  #8A6449;
+      --espresso:   #6B5744;
+      --caramel:    #C49A6C;
+      --ink:        #1C1A19;
+      --ink-mid:    #3D3530;
+      --stone:      #7A6E66;
+      --stone-lt:   #ADA49B;
+      --white:      #FFFFFF;
+      --border:     #E3DAD0;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--cream);
+      color: var(--ink);
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--ink);
+      padding: 1.25rem 2.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .header-logo {
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      font-size: 1rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--white);
+    }
+    .header-sub {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 0.9rem;
+      color: var(--stone-lt);
+      letter-spacing: 0.04em;
+    }
+
+    /* ── Container ── */
+    .container { max-width: 1080px; margin: 0 auto; padding: 2.5rem 2rem 5rem; }
+
+    /* ── Input Panel ── */
+    .input-panel {
+      background: var(--white);
+      border-radius: 16px;
+      padding: 1.5rem 2rem;
+      border: 1px solid var(--border);
+      margin-bottom: 3rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+    .input-panel-top {
+      display: flex;
+      align-items: flex-end;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .field-group { display: flex; flex-direction: column; gap: 0.45rem; }
+    .field-label {
+      font-size: 0.68rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--copper);
+    }
+
+    .valor-wrapper {
+      display: flex;
+      align-items: center;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 0 1rem;
+      background: var(--cream);
+      transition: border-color .2s, background .2s;
+    }
+    .valor-wrapper:focus-within { border-color: var(--copper); background: var(--white); }
+    .valor-prefix { font-size: 1.1rem; font-weight: 400; color: var(--stone); margin-right: 0.35rem; user-select: none; }
+    #valor {
+      border: none; background: transparent;
+      font-size: 1.4rem; font-weight: 300; font-family: 'Inter', sans-serif;
+      color: var(--ink); width: 200px; padding: 0.65rem 0; outline: none; letter-spacing: 0.02em;
+    }
+    #valor::placeholder { color: var(--cream-mid); }
+
+    /* Campo de data: exibe texto em dd/mm/aaaa; o input nativo (oculto) serve
+       apenas para abrir o calendar picker do sistema operacional */
+    .date-wrapper {
+      position: relative; display: inline-flex; align-items: center;
+    }
+    .date-input {
+      border: 1.5px solid var(--border); border-radius: 10px;
+      padding: 0.62rem 2.2rem 0.62rem 0.9rem; font-size: 0.88rem; font-weight: 400;
+      color: var(--ink); background: var(--cream); outline: none;
+      font-family: 'Inter', sans-serif; transition: border-color .2s, background .2s; width: 152px;
+    }
+    .date-input:focus { border-color: var(--copper); background: var(--white); }
+    .date-input.error { border-color: #C0392B; background: #fdf5f5; }
+    .date-cal-btn {
+      position: absolute; right: 0.55rem; background: none; border: none;
+      cursor: pointer; color: var(--stone-lt); display: flex; align-items: center;
+      padding: 0; transition: color .2s;
+    }
+    .date-cal-btn:hover { color: var(--copper); }
+    .date-native {
+      position: absolute; width: 1px; height: 1px;
+      opacity: 0; pointer-events: none; overflow: hidden;
+    }
+    .date-error { font-size: 0.68rem; color: #C0392B; display: none; margin-top: -0.2rem; }
+    .date-error.visible { display: block; }
+
+    /* Controle segmentado: Com entrada / Sem entrada 30d / Sem entrada 60d
+       Em mobile (≤480px) os botões empilham verticalmente para caber na tela */
+    .seg-control { display: inline-flex; border: 1.5px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--cream); align-self: flex-start; }
+    @media (max-width: 480px) {
+      .seg-control { display: flex; flex-wrap: wrap; border-radius: 10px; }
+      .seg-control label { flex: 1 1 auto; text-align: center; border-right: none !important; border-bottom: 1px solid var(--border); }
+      .seg-control label:last-of-type { border-bottom: none; }
+    }
+    .seg-control input { display: none; }
+    .seg-control label {
+      padding: 0.55rem 0.9rem; font-size: 0.78rem; font-weight: 500; cursor: pointer;
+      color: var(--stone); font-family: 'Inter', sans-serif; letter-spacing: 0.02em;
+      transition: background .15s, color .15s; white-space: nowrap; user-select: none;
+      border-right: 1px solid var(--border);
+    }
+    .seg-control label:last-of-type { border-right: none; }
+    .seg-control input:checked + label { background: var(--ink); color: var(--white); }
+
+    /* ── Placeholder ── */
+    .placeholder { text-align: center; color: var(--stone-lt); padding: 5rem 2rem; }
+    .placeholder .pl-icon { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 2rem; color: var(--cream-mid); display: block; margin-bottom: 0.75rem; }
+    .placeholder p { font-size: 0.9rem; line-height: 1.6; }
+
+    /* ── Seções (Boleto / Santander / Cartão) ── */
+    .section { margin-bottom: 3rem; }
+    .section-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem; }
+    .section-rule { height: 1px; background: var(--border); flex: 1; }
+    .section-label {
+      font-size: 0.65rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.15em; white-space: nowrap;
+    }
+    .s-boleto    .section-label { color: var(--copper); }
+    .s-santander .section-label { color: var(--espresso); }
+    .s-cartao    .section-label { color: var(--caramel); }
+
+    /* ── Cards de condição de pagamento ── */
+    .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 0.9rem; align-items: start; }
+
+    .card {
+      background: var(--white);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      cursor: pointer;
+      transition: border-color .2s, box-shadow .2s, transform .15s;
+    }
+    .card:hover { border-color: var(--copper); box-shadow: 0 4px 20px rgba(166,123,91,.12); transform: translateY(-2px); }
+    .card.expanded { transform: none; border-color: var(--copper); box-shadow: 0 4px 20px rgba(166,123,91,.14); }
+
+    .s-santander .card:hover,
+    .s-santander .card.expanded { border-color: var(--espresso); box-shadow: 0 4px 20px rgba(107,87,68,.12); }
+
+    .s-cartao .card:hover,
+    .s-cartao .card.expanded { border-color: var(--caramel); box-shadow: 0 4px 20px rgba(196,154,108,.12); }
+
+    /* Faixa colorida no topo de cada card identifica a categoria */
+    .card-top { height: 3px; }
+    .s-boleto    .card-top { background: var(--copper); }
+    .s-santander .card-top { background: var(--espresso); }
+    .s-cartao    .card-top { background: var(--caramel); }
+
+    .card-body { padding: 1.1rem 1rem 0.9rem; }
+
+    .card-label { font-size: 0.78rem; font-weight: 500; color: var(--ink-mid); margin-bottom: 0.2rem; letter-spacing: 0.02em; }
+    .card-badge {
+      font-size: 0.65rem; font-weight: 600; letter-spacing: 0.04em;
+      border-radius: 20px; padding: 0.12rem 0.55rem;
+      display: inline-block; margin-bottom: 0.8rem;
+    }
+    .badge-desc   { color: var(--copper);   background: rgba(166,123,91,.1); }
+    .badge-santan { color: var(--espresso); background: rgba(107,87,68,.1); }
+    .badge-cartao { color: var(--caramel);  background: rgba(196,154,108,.12); }
+
+    .card-total-row { display: flex; align-items: baseline; gap: 0.3rem; }
+    .card-total-lbl { font-size: 0.63rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--stone-lt); }
+    .card-total-val {
+      font-family: 'Inter', sans-serif;
+      font-size: 1.25rem; font-weight: 500; color: var(--ink); line-height: 1;
+    }
+
+    .card-detail { font-size: 0.72rem; color: var(--stone); line-height: 1.7; margin-top: 0.55rem; }
+    .card-detail strong { color: var(--ink-mid); font-weight: 500; }
+
+    .card-hint { font-size: 0.63rem; color: var(--stone-lt); margin-top: 0.6rem; display: flex; align-items: center; gap: 0.25rem; letter-spacing: 0.02em; }
+
+    /* Área expandida com o calendário de parcelas — abre ao clicar no card */
+    .card-expand { max-height: 0; overflow: hidden; transition: max-height .35s ease; }
+    .card.expanded .card-expand { max-height: 700px; }
+    .card-expand-inner { border-top: 1px solid var(--cream-dark); padding: 0.8rem 1rem 0; }
+
+    .parcelas-ttl { font-size: 0.63rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; color: var(--stone-lt); margin-bottom: 0.5rem; }
+    .parcelas-table { width: 100%; border-collapse: collapse; }
+    .parcelas-table td { padding: 0.28rem 0.15rem; font-size: 0.7rem; border-bottom: 1px solid var(--cream); }
+    .parcelas-table tr:last-child td { border-bottom: none; }
+    .col-n { color: var(--stone-lt); width: 18px; font-weight: 500; white-space: nowrap; }
+    .col-tipo { color: var(--stone); }
+    .col-data { color: var(--stone-lt); font-size: 0.63rem; white-space: nowrap; padding-left: 0.25rem; }
+    .col-val { text-align: right; font-weight: 500; color: var(--ink); white-space: nowrap; padding-left: 0.25rem; }
+    .total-row td { font-weight: 600; color: var(--ink); padding-top: 0.55rem !important; border-top: 1px solid var(--border) !important; }
+
+    /* Botões de ação dentro do card expandido */
+    .card-actions { display: flex; gap: 0.5rem; padding: 0.7rem 1rem 0.85rem; border-top: 1px solid var(--cream-dark); margin-top: 0.25rem; }
+    .btn-exp {
+      flex: 1; display: flex; align-items: center; justify-content: center; gap: 0.3rem;
+      padding: 0.45rem 0.4rem; border-radius: 999px; border: 1px solid var(--border);
+      font-size: 0.68rem; font-weight: 500; cursor: pointer; background: var(--cream);
+      color: var(--stone); transition: all .15s; font-family: 'Inter', sans-serif;
+      letter-spacing: 0.02em;
+    }
+    .btn-exp:hover { background: var(--cream-dark); border-color: var(--copper); color: var(--copper); }
+    .btn-exp svg { flex-shrink: 0; }
+
+    /* ── Impressão A4 ── */
+    @media print {
+      @page { size: A4; margin: 15mm 20mm; }
+      header, .container, #export-loading { display: none !important; }
+      #print-frame { display: block !important; }
+    }
+    #print-frame { display: none; }
+
+    /* ── Overlay de carregamento (geração de imagem) ── */
+    #export-loading { display: none; position: fixed; inset: 0; background: rgba(28,26,25,.5); z-index: 9999; align-items: center; justify-content: center; }
+    #export-loading.visible { display: flex; }
+    #export-loading .spinner { background: var(--white); border-radius: 14px; padding: 2rem 2.5rem; text-align: center; font-size: 0.85rem; color: var(--stone); font-weight: 500; }
+    #export-loading .spinner::before { content: ''; display: block; width: 28px; height: 28px; margin: 0 auto 1rem; border: 2.5px solid var(--cream-mid); border-top-color: var(--copper); border-radius: 50%; animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-logo">Prima Linea</div>
+  <div class="header-sub">Simulador de Condições de Pagamento</div>
+  <!-- Link para o portal administrativo onde os fatores e descontos são configurados -->
+  <a href="admin.html" style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:.9rem;font-weight:300;color:var(--stone-lt);text-decoration:none;opacity:.7;transition:opacity .2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.7">Portal Administrativo</a>
+</header>
+
+<div class="container">
+  <!-- Painel de entrada: valor, datas e modo de financiamento -->
+  <div class="input-panel">
+    <div class="input-panel-top">
+      <div class="field-group">
+        <span class="field-label">Valor do Orçamento</span>
+        <div class="valor-wrapper">
+          <span class="valor-prefix">R$</span>
+          <!-- Máscara monetária aplicada via JS: formata automaticamente em R$ 1.234,56 -->
+          <input type="text" id="valor" placeholder="0,00" inputmode="numeric" autocomplete="off">
+        </div>
+      </div>
+
+      <div class="field-group">
+        <span class="field-label">Data da Entrada *</span>
+        <div class="date-wrapper">
+          <!-- Campo de texto visível com máscara dd/mm/aaaa -->
+          <input type="text" class="date-input" id="dataEntrada" placeholder="dd/mm/aaaa" maxlength="10" inputmode="numeric" autocomplete="off">
+          <!-- Botão do calendário: abre o picker nativo do sistema operacional -->
+          <button type="button" class="date-cal-btn" tabindex="-1">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </button>
+          <!-- Input nativo oculto: só serve para disparar o calendar picker do sistema -->
+          <input type="date" class="date-native" id="dataEntradaNative" tabindex="-1">
+        </div>
+        <span class="date-error" id="entradaError">Campo obrigatório</span>
+      </div>
+
+      <div class="field-group" id="parcelaGroup">
+        <span class="field-label">Data da 1ª Parcela *</span>
+        <div class="date-wrapper">
+          <input type="text" class="date-input" id="dataParcela" placeholder="dd/mm/aaaa" maxlength="10" inputmode="numeric" autocomplete="off">
+          <button type="button" class="date-cal-btn" tabindex="-1">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </button>
+          <input type="date" class="date-native" id="dataParcelaNative" tabindex="-1">
+        </div>
+        <span class="date-error" id="dateError">Deve ser após a data da entrada</span>
+        <span class="date-error" id="parcelaError">Campo obrigatório</span>
+      </div>
+    </div>
+
+    <!-- Seletor de modalidade de financiamento Santander:
+         Com entrada = cliente paga 1/n na entrada + n−1 parcelas via Santander (30d)
+         Sem entrada 30d = todas as parcelas via Santander, recebimento em 30 dias
+         Sem entrada 60d = todas as parcelas via Santander, recebimento em 60 dias -->
+    <div class="seg-control">
+      <input type="radio" name="modo" id="modo-com" value="com" checked>
+      <label for="modo-com">Com entrada</label>
+      <input type="radio" name="modo" id="modo-sem30" value="sem30">
+      <label for="modo-sem30">Sem entrada · 30d</label>
+      <input type="radio" name="modo" id="modo-sem60" value="sem60">
+      <label for="modo-sem60">Sem entrada · 60d</label>
+    </div>
+  </div>
+
+  <!-- Área de resultado: preenchida dinamicamente pelo JS quando o valor é digitado -->
+  <div id="resultado">
+    <div class="placeholder">
+      <span class="pl-icon">✦</span>
+      <p>Digite o valor do orçamento para simular<br>as condições de pagamento.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Frame oculto usado para impressão A4 (preenchido dinamicamente pelo JS) -->
+<div id="print-frame"></div>
+<div id="export-loading"><div class="spinner">Gerando imagem...</div></div>
+
+<script>
+  // ── Configuração e defaults ──────────────────────────────────────────────────
+  // Os valores abaixo são os padrões da planilha Santander (Mega Planilha Prima Linea).
+  // Quando o administrador salva novos valores pelo portal admin.html,
+  // eles ficam gravados no localStorage sob a chave 'pl_config'.
+  // Este simulador lê essa chave a cada cálculo — se não encontrar, usa os DEFAULTS.
+  //
+  // IMPORTANTE: localStorage é local ao navegador/dispositivo.
+  // Para que as alterações do admin cheguem aos vendedores em outros dispositivos,
+  // seria necessário um servidor backend (integração futura com o ERP).
+  const STORAGE_KEY = 'pl_config';
+  const DEFAULTS = {
+    fatorCorrecao: 0.1665,        // 16,65% — desconto aplicado antes do cálculo das parcelas
+    santander: [                  // Fatores multiplicadores 30 dias (índice 0 = 1×, 11 = 12×)
+      1.0253, 0.5190540118, 0.350340458, 0.2660100047, 0.2154327824,
+      0.1817321657, 0.1567768837, 0.1387546517, 0.1247476901,
+      0.1135514091, 0.1043992506, 0.09678017505
+    ],
+    santander60: [                // Fatores multiplicadores 60 dias (índice 0 = 1×, 11 = 12×)
+      1.05124, 0.53219, 0.3592, 0.27274, 0.22088,
+      0.18633, 0.16051, 0.14206, 0.12772,
+      0.11625, 0.10688, 0.09908
+    ],
+    boleto: [0.20, 0.16, 0.15, 0.14, 0.13],      // Descontos boleto: à vista, 2×, 3×, 4×, 5×
+    cartao: [0.16, 0.14, 0.13, 0.12, 0.11, 0.10] // Descontos cartão: débito, crédito à vista, 2×, 3×, 4×, 5×
+  };
+
+  // Lê o config do localStorage e devolve. Usa DEFAULTS se não houver nada salvo.
+  function getCfg() {
+    try { const r = localStorage.getItem(STORAGE_KEY); return r ? JSON.parse(r) : DEFAULTS; }
+    catch { return DEFAULTS; }
+  }
+
+  // Variáveis globais que guardam os fatores ativos.
+  // Recarregadas a cada simulação para pegar eventuais atualizações do admin.
+  let FATOR_CORRECAO, FSant, FSant60;
+  function reloadCfg() {
+    const cfg = getCfg();
+    FATOR_CORRECAO = cfg.fatorCorrecao ?? DEFAULTS.fatorCorrecao;
+    // FSant e FSant60 são objetos indexados por número de parcelas (chave = 1 a 12)
+    FSant = {};
+    (cfg.santander ?? DEFAULTS.santander).forEach((v, i) => FSant[i+1] = v);
+    FSant60 = {};
+    (cfg.santander60 ?? DEFAULTS.santander60).forEach((v, i) => FSant60[i+1] = v);
+    window._cfgBoleto = cfg.boleto ?? DEFAULTS.boleto;
+    window._cfgCartao = cfg.cartao ?? DEFAULTS.cartao;
+  }
+  reloadCfg();
+
+  // ── Formatadores ─────────────────────────────────────────────────────────────
+  // Formata valor monetário: R$ 1.234,56
+  function fmt(v) {
+    return 'R$ ' + v.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  }
+  // Formata objeto Date para string dd/mm/aaaa
+  function fmtData(d) {
+    if (!d) return null;
+    return [String(d.getDate()).padStart(2,'0'), String(d.getMonth()+1).padStart(2,'0'), d.getFullYear()].join('/');
+  }
+  function addMonths(date, n) { const d = new Date(date); d.setMonth(d.getMonth()+n); return d; }
+
+  // Gera o array de datas de cada parcela a partir da data de entrada e da 1ª parcela.
+  // Para "com entrada": parcela 0 = data de entrada; parcelas seguintes = 1ª parcela + n meses.
+  // Para "sem entrada": todas as parcelas = 1ª parcela + n meses.
+  function getDates(dE, dP, parcelas, semEntrada) {
+    return parcelas.map((p,i) => {
+      if (i===0 && !semEntrada && p.label==='Entrada') return dE ? fmtData(dE) : null;
+      const idx = (!semEntrada && p.label!=='Entrada') ? i-1 : i;
+      return dP ? fmtData(addMonths(dP, idx)) : null;
+    });
+  }
+  function getSingleDate(dE) { return dE ? fmtData(dE) : null; }
+
+  // ── Cálculos de parcelas ─────────────────────────────────────────────────────
+
+  // Boleto / Cheque / Dinheiro:
+  // Aplica o percentual de desconto sobre o valor total e divide em n parcelas iguais.
+  function parcelas_boleto(valor, n, semEntrada) {
+    const descs = { 1: _cfgBoleto[0], 2: _cfgBoleto[1], 3: _cfgBoleto[2], 4: _cfgBoleto[3], 5: _cfgBoleto[4] };
+    const total=valor*(1-descs[n]), p=total/n, result=[];
+    if(n===1) result.push({label:'Pagamento único',valor:total});
+    else if(semEntrada) for(let i=1;i<=n;i++) result.push({label:`Parcela ${i}`,valor:p});
+    else { result.push({label:'Entrada',valor:p}); for(let i=2;i<=n;i++) result.push({label:`Parcela ${i}`,valor:p}); }
+    return {parcelas:result,total,desc:descs[n]};
+  }
+
+  // Santander:
+  // Fórmula com entrada (n parcelas total):
+  //   O1 = valor × (1 − fatorCorrecao)
+  //   entrada = O1 / n
+  //   parcela mensal = (O1 − entrada) × fator[n−1]  (fator indexado por n−1 parcelas Santander)
+  //
+  // Fórmula sem entrada (n parcelas total):
+  //   parcela mensal = O1 × fator[n]  (todas as n parcelas via Santander)
+  function parcelas_santander(valor, n, semEntrada, fatores) {
+    const F = fatores || FSant;
+    const O1=valor*(1-FATOR_CORRECAO), result=[];
+    let total;
+    if(semEntrada) {
+      const pm=O1*F[n]; total=pm*n;
+      for(let i=1;i<=n;i++) result.push({label:`Parcela ${i}`,valor:pm});
+    } else {
+      const entrada=O1/n, pm=(O1-O1/n)*F[n-1];
+      total=entrada+pm*(n-1);
+      result.push({label:'Entrada',valor:entrada});
+      for(let i=2;i<=n;i++) result.push({label:`Parcela ${i}`,valor:pm});
+    }
+    return {parcelas:result,total};
+  }
+
+  // Cartão Visa / Mastercard:
+  // Aplica o percentual de desconto e divide em n parcelas iguais.
+  function parcelas_cartao(valor, desc, n) {
+    const total=valor*(1-desc), p=total/n, result=[];
+    if(n===1) result.push({label:'Pagamento único',valor:total});
+    else for(let i=1;i<=n;i++) result.push({label:`Parcela ${i}`,valor:p});
+    return {parcelas:result,total,desc};
+  }
+
+  // ── Ícones SVG inline ────────────────────────────────────────────────────────
+  const icoHint   = `<svg width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M5 1v4M5 7.5v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="5" cy="5" r="4.25" stroke="currentColor" stroke-width="1.2"/></svg>`;
+  const icoPrint  = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>`;
+  const icoShare  = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>`;
+
+  // ── Construtor de tabela de parcelas ─────────────────────────────────────────
+  // Gera o HTML da tabela com número, descrição, data e valor de cada parcela.
+  function buildTable(parcelas, total, dates) {
+    const rows = parcelas.map((p,i) => `
+      <tr>
+        <td class="col-n">${i+1}</td>
+        <td class="col-tipo">${p.label}</td>
+        <td class="col-data">${dates&&dates[i]?dates[i]:''}</td>
+        <td class="col-val">${fmt(p.valor)}</td>
+      </tr>`).join('');
+    return `<table class="parcelas-table">${rows}
+      <tr class="total-row"><td></td><td class="col-tipo">Total</td><td></td><td class="col-val">${fmt(total)}</td></tr>
+    </table>`;
+  }
+
+  // ── Construtor de card ───────────────────────────────────────────────────────
+  // Monta o HTML completo de um card de condição de pagamento.
+  // O payload (data-payload) guarda os dados do card para uso nas funções de export.
+  let cardCtr = 0;
+  function buildCard(label, badge, badgeClass, totalVal, lines, expandData, dates, cid) {
+    const payload = JSON.stringify({label,badge,badgeClass,totalVal,lines,parcelas:expandData.parcelas,total:expandData.total,dates});
+    const tbl = buildTable(expandData.parcelas, expandData.total, dates);
+    const sumHtml = lines.map(l=>`<div>${l}</div>`).join('');
+    return `
+      <div class="card" id="${cid}" data-payload='${payload.replace(/'/g,"&#39;")}' onclick="toggleCard(this)">
+        <div class="card-top"></div>
+        <div class="card-body">
+          <div class="card-label">${label}</div>
+          <span class="card-badge ${badgeClass}">${badge}</span>
+          <div class="card-total-row">
+            <span class="card-total-lbl">Total</span>
+            <span class="card-total-val">${fmt(totalVal)}</span>
+          </div>
+          <div class="card-detail">${sumHtml}</div>
+          <div class="card-hint">${icoHint} Ver parcelas detalhadas</div>
+        </div>
+        <div class="card-expand">
+          <div class="card-expand-inner">
+            <div class="parcelas-ttl">Calendário de pagamentos</div>
+            ${tbl}
+          </div>
+          <div class="card-actions">
+            <button class="btn-exp" onclick="exportPrint(event,'${cid}')">${icoPrint} Imprimir A4</button>
+            <button class="btn-exp" onclick="exportImage(event,'${cid}')">${icoShare} Salvar imagem</button>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  // Renderiza um card de boleto/cheque/dinheiro
+  function renderBoleto(valor,n,semEntrada,label,dE,dP) {
+    const descs = { 1: _cfgBoleto[0], 2: _cfgBoleto[1], 3: _cfgBoleto[2], 4: _cfgBoleto[3], 5: _cfgBoleto[4] };
+    const data=parcelas_boleto(valor,n,semEntrada); const p=data.total/n;
+    const lines=n===1?['Pagamento único']:semEntrada?[`<strong>${n}× de ${fmt(p)}</strong>`]:
+      [`Entrada <strong>${fmt(p)}</strong>`,`${n-1}× de <strong>${fmt(p)}</strong>`];
+    const dates=n===1?[getSingleDate(dE)]:getDates(dE,dP,data.parcelas,semEntrada);
+    return buildCard(label,`↓ ${(descs[n]*100).toFixed(0)}% desconto`,'badge-desc',data.total,lines,data,dates,`c${++cardCtr}`);
+  }
+
+  // Renderiza um card Santander (6× a 12×).
+  // O percentual de desconto é calculado em relação ao valor original do orçamento.
+  function renderSantander(valor,n,semEntrada,dE,dP,fatores) {
+    const data=parcelas_santander(valor,n,semEntrada,fatores);
+    const pm=semEntrada?data.parcelas[0].valor:(data.parcelas[1]?.valor??0);
+    const entrada=data.parcelas[0].valor;
+    const lines=semEntrada?[`<strong>${n}× de ${fmt(pm)}</strong>`]:
+      [`Entrada <strong>${fmt(entrada)}</strong>`,`${n-1}× de <strong>${fmt(pm)}</strong>`];
+    const pct=((1-data.total/valor)*100).toFixed(1).replace('.',',');
+    const badge=`↓ ${pct}% desconto`;
+    return buildCard(`${n}× Santander`,badge,'badge-santan',data.total,lines,data,getDates(dE,dP,data.parcelas,semEntrada),`c${++cardCtr}`);
+  }
+
+  // Renderiza um card de cartão (débito, crédito à vista, 2× a 5×)
+  function renderCartao(valor,label,desc,n,dE,dP) {
+    const data=parcelas_cartao(valor,desc,n); const p=data.total/n;
+    const lines=n===1?['Pagamento único']:[`<strong>${n}× de ${fmt(p)}</strong>`];
+    const dates=n===1?[getSingleDate(dE)]:getDates(dE,dP,data.parcelas,false);
+    return buildCard(label,`↓ ${(desc*100).toFixed(0)}% desconto`,'badge-cartao',data.total,lines,data,dates,`c${++cardCtr}`);
+  }
+
+  // Alterna a expansão do card para mostrar/ocultar o calendário de parcelas
+  function toggleCard(el) { el.classList.toggle('expanded'); }
+
+  // ── Impressão A4 ─────────────────────────────────────────────────────────────
+  // Gera um layout limpo para impressão no frame oculto e aciona window.print().
+  // O CSS @media print oculta o site normal e mostra apenas o print-frame.
+  function exportPrint(e, cid) {
+    e.stopPropagation();
+    const d = JSON.parse(document.getElementById(cid).dataset.payload.replace(/&#39;/g,"'"));
+    const rawVal = document.getElementById('valor').value;
+    const accent = d.badgeClass==='badge-santan'?'#6B5744':d.badgeClass==='badge-cartao'?'#C49A6C':'#A67B5B';
+
+    const rows = d.parcelas.map((p,i)=>`
+      <tr style="border-bottom:1px solid #F0EAE1">
+        <td style="padding:7px 4px;color:#ADA49B;font-weight:500;width:26px">${i+1}</td>
+        <td style="padding:7px 4px;color:#7A6E66">${p.label}</td>
+        <td style="padding:7px 4px;color:#C5BDB5;font-size:11px">${d.dates&&d.dates[i]?d.dates[i]:''}</td>
+        <td style="padding:7px 4px;text-align:right;font-weight:500;color:#1C1A19">${fmt(p.valor)}</td>
+      </tr>`).join('');
+
+    document.getElementById('print-frame').innerHTML = `
+      <div style="font-family:'Segoe UI',system-ui,sans-serif;color:#1C1A19;max-width:680px;margin:0 auto">
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:18px;margin-bottom:28px;border-bottom:2px solid ${accent}">
+          <div>
+            <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.2em;color:#ADA49B;margin-bottom:6px">Prima Linea · Condição de Pagamento</div>
+            <div style="font-size:24px;font-weight:300;letter-spacing:.04em;color:#1C1A19">${d.label}</div>
+            <div style="font-size:11px;color:${accent};margin-top:3px;font-weight:500">${d.badge}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:#ADA49B;margin-bottom:4px">Orçamento</div>
+            <div style="font-size:16px;font-weight:400;color:#1C1A19">R$ ${rawVal}</div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:20px;margin-bottom:30px">
+          <div style="flex:1;background:#F9F6F2;border-radius:10px;padding:16px 20px;border:1px solid #E3DAD0">
+            <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:#ADA49B;margin-bottom:5px">Total a pagar</div>
+            <div style="font-size:30px;font-weight:300;color:${accent};letter-spacing:.01em">${fmt(d.total)}</div>
+          </div>
+          <div style="flex:1;background:#F9F6F2;border-radius:10px;padding:16px 20px;border:1px solid #E3DAD0">
+            <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:#ADA49B;margin-bottom:5px">Forma</div>
+            <div style="font-size:13px;font-weight:400;color:#3D3530;line-height:1.5">${d.lines.join('<br>').replace(/<strong>/g,'').replace(/<\/strong>/g,'')}</div>
+          </div>
+        </div>
+
+        <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:#ADA49B;margin-bottom:10px">Calendário de Pagamentos</div>
+        <table style="width:100%;border-collapse:collapse">${rows}
+          <tr style="border-top:2px solid #E3DAD0">
+            <td></td>
+            <td style="padding:9px 4px;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#3D3530">Total</td>
+            <td></td>
+            <td style="padding:9px 4px;text-align:right;font-weight:600;font-size:15px;color:#1C1A19">${fmt(d.total)}</td>
+          </tr>
+        </table>
+
+        <div style="margin-top:48px;font-size:9px;color:#C5BDB5;text-align:center;border-top:1px solid #F0EAE1;padding-top:14px;letter-spacing:.06em">
+          PRIMA LINEA · ${fmtData(new Date())}
+        </div>
+      </div>`;
+    window.print();
+  }
+
+  // ── Exportar como imagem PNG ─────────────────────────────────────────────────
+  // Usa html2canvas para renderizar um node temporário fora da tela e salvar como PNG.
+  // URL.createObjectURL garante compatibilidade com todos os navegadores modernos.
+  async function exportImage(e, cid) {
+    e.stopPropagation();
+    const d = JSON.parse(document.getElementById(cid).dataset.payload.replace(/&#39;/g,"'"));
+    const rawVal = document.getElementById('valor').value;
+    const loading = document.getElementById('export-loading');
+    loading.classList.add('visible');
+
+    const accent = d.badgeClass==='badge-santan'?'#6B5744':d.badgeClass==='badge-cartao'?'#C49A6C':'#A67B5B';
+    const accentLight = d.badgeClass==='badge-santan'?'rgba(107,87,68,.08)':d.badgeClass==='badge-cartao'?'rgba(196,154,108,.1)':'rgba(166,123,91,.08)';
+
+    const rows = d.parcelas.map((p,i)=>`
+      <div style="display:flex;align-items:center;padding:9px 0;border-bottom:1px solid #F0EAE1;gap:10px">
+        <span style="width:22px;height:22px;border-radius:50%;background:${accentLight};color:${accent};font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0">${i+1}</span>
+        <span style="flex:1;font-size:13px;color:#7A6E66;font-weight:400">${p.label}</span>
+        ${d.dates&&d.dates[i]?`<span style="font-size:11px;color:#C5BDB5;margin-right:4px">${d.dates[i]}</span>`:''}
+        <span style="font-size:13px;font-weight:500;color:#1C1A19">${fmt(p.valor)}</span>
+      </div>`).join('');
+
+    const node = document.createElement('div');
+    node.style.cssText = 'position:fixed;left:-9999px;top:0;width:420px;background:#F9F6F2;font-family:"Segoe UI",system-ui,sans-serif;color:#1C1A19;border-radius:0;overflow:hidden';
+    node.innerHTML = `
+      <div style="background:${accent};padding:22px 26px 20px">
+        <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.2em;color:rgba(255,255,255,.6);margin-bottom:6px">Prima Linea · Condição de Pagamento</div>
+        <div style="font-size:22px;font-weight:300;color:#fff;letter-spacing:.04em">${d.label}</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.75);margin-top:3px">${d.badge}</div>
+      </div>
+      <div style="padding:22px 26px">
+        <div style="display:flex;gap:12px;margin-bottom:22px">
+          <div style="flex:1;background:#fff;border-radius:10px;padding:14px 16px;border:1px solid #E3DAD0">
+            <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:#ADA49B;margin-bottom:4px">Orçamento</div>
+            <div style="font-size:15px;font-weight:300;color:#3D3530">R$ ${rawVal}</div>
+          </div>
+          <div style="flex:1;background:#fff;border-radius:10px;padding:14px 16px;border:1px solid ${accent}40">
+            <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:#ADA49B;margin-bottom:4px">Total a pagar</div>
+            <div style="font-size:18px;font-weight:400;color:${accent}">${fmt(d.total)}</div>
+          </div>
+        </div>
+        <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:#ADA49B;margin-bottom:6px">Parcelas</div>
+        ${rows}
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1.5px solid #E3DAD0;margin-top:2px">
+          <span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:#7A6E66">Total</span>
+          <span style="font-size:16px;font-weight:500;color:#1C1A19">${fmt(d.total)}</span>
+        </div>
+        <div style="margin-top:16px;font-size:9px;color:#C5BDB5;text-align:center;letter-spacing:.08em">PRIMA LINEA · ${fmtData(new Date())}</div>
+      </div>`;
+
+    document.body.appendChild(node);
+    try {
+      const canvas = await html2canvas(node, {scale:2.5, useCORS:true, backgroundColor:'#F9F6F2'});
+      canvas.toBlob(blob => {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.download = `prima-linea-${d.label.replace(/[^a-zA-Z0-9]/g,'-').toLowerCase()}.png`;
+        link.href = url;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }, 'image/png');
+    } finally {
+      document.body.removeChild(node);
+      loading.classList.remove('visible');
+    }
+  }
+
+  // ── Lógica principal ─────────────────────────────────────────────────────────
+
+  // Converte string dd/mm/aaaa para objeto Date. Retorna null se inválido.
+  function parseBR(str) {
+    if(!str||str.length<10) return null;
+    const [d,m,y] = str.split('/');
+    if(!d||!m||!y||y.length<4) return null;
+    const dt = new Date(`${y}-${m}-${d}T12:00:00`); // T12:00:00 evita problemas de fuso horário
+    return isNaN(dt) ? null : dt;
+  }
+
+  // Aplica máscara de data ao campo de texto: formata automaticamente para dd/mm/aaaa
+  function applyDateMask(el) {
+    el.addEventListener('input', function(e) {
+      let v = e.target.value.replace(/\D/g,'');
+      if(v.length>2) v = v.slice(0,2)+'/'+v.slice(2);
+      if(v.length>5) v = v.slice(0,5)+'/'+v.slice(5,9);
+      e.target.value = v;
+      if(v.length===10) atualizar(); // recalcula quando a data está completa
+    });
+    el.addEventListener('blur', atualizar);
+  }
+  applyDateMask(document.getElementById('dataEntrada'));
+  applyDateMask(document.getElementById('dataParcela'));
+
+  // Liga o ícone de calendário ao input nativo oculto.
+  // O input nativo (type="date") abre o seletor do sistema operacional;
+  // quando o usuário escolhe uma data, o campo de texto visível é atualizado.
+  function bindNativePicker(textId, nativeId) {
+    const txt = document.getElementById(textId);
+    const nat = document.getElementById(nativeId);
+    txt.closest('.date-wrapper').querySelector('.date-cal-btn').addEventListener('click', function(e) {
+      e.preventDefault();
+      try { nat.showPicker(); } catch(_) { nat.click(); }
+    });
+    nat.addEventListener('change', function() {
+      if(!nat.value) return;
+      const [y,m,d] = nat.value.split('-');
+      txt.value = `${d}/${m}/${y}`;
+      atualizar();
+    });
+  }
+  bindNativePicker('dataEntrada', 'dataEntradaNative');
+  bindNativePicker('dataParcela', 'dataParcelaNative');
+
+  // Pré-preenche as datas ao carregar a página:
+  // Data de entrada = hoje; Data da 1ª parcela = hoje + 1 mês
+  (function() {
+    const hoje = new Date();
+    function fmtBR(d) {
+      return String(d.getDate()).padStart(2,'0') + '/' +
+             String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear();
+    }
+    function fmtISO(d) {
+      return d.getFullYear() + '-' +
+             String(d.getMonth()+1).padStart(2,'0') + '-' +
+             String(d.getDate()).padStart(2,'0');
+    }
+    const proxMes = new Date(hoje);
+    proxMes.setMonth(proxMes.getMonth() + 1);
+
+    document.getElementById('dataEntrada').value = fmtBR(hoje);
+    document.getElementById('dataEntradaNative').value = fmtISO(hoje);
+    document.getElementById('dataParcela').value = fmtBR(proxMes);
+    document.getElementById('dataParcelaNative').value = fmtISO(proxMes);
+  })();
+
+  function getInputDates() {
+    const de=document.getElementById('dataEntrada').value;
+    const dp=document.getElementById('dataParcela').value;
+    return { dE: parseBR(de), dP: parseBR(dp) };
+  }
+
+  // Valida as datas: entrada obrigatória, parcela obrigatória e deve ser após a entrada
+  function validateDates(dE, dP, valor) {
+    let valid = true;
+
+    const entradaErr = document.getElementById('entradaError');
+    const entradaInp = document.getElementById('dataEntrada');
+    if (!dE) {
+      entradaErr.classList.add('visible'); entradaInp.classList.add('error'); valid = false;
+    } else {
+      entradaErr.classList.remove('visible'); entradaInp.classList.remove('error');
+    }
+
+    const parcelaErr = document.getElementById('parcelaError');
+    const orderErr   = document.getElementById('dateError');
+    const parcelaInp = document.getElementById('dataParcela');
+    if (!dP) {
+      parcelaErr.classList.add('visible'); parcelaInp.classList.add('error');
+      orderErr.classList.remove('visible'); valid = false;
+    } else if (dE && dP <= dE) {
+      orderErr.classList.add('visible'); parcelaInp.classList.add('error');
+      parcelaErr.classList.remove('visible'); valid = false;
+    } else {
+      parcelaErr.classList.remove('visible'); orderErr.classList.remove('visible');
+      parcelaInp.classList.remove('error');
+    }
+
+    return valid;
+  }
+
+  // Função principal: chamada toda vez que o valor, as datas ou o modo mudam.
+  // Recalcula e renderiza todos os cards de condições de pagamento.
+  function atualizar() {
+    reloadCfg(); // relê o localStorage para pegar eventuais atualizações do admin
+    const raw=document.getElementById('valor').value.replace(/\./g,'').replace(',','.');
+    const valor=parseFloat(raw);
+    const modo = document.querySelector('input[name="modo"]:checked').value;
+    const semEntrada = modo !== 'com';
+    const fatores = modo === 'sem60' ? FSant60 : FSant; // usa fatores 60d se modo for sem60
+    const {dE,dP}=getInputDates();
+    const el=document.getElementById('resultado');
+
+    if(!valor||valor<=0) {
+      ['entradaError','parcelaError','dateError'].forEach(id=>document.getElementById(id).classList.remove('visible'));
+      ['dataEntrada','dataParcela'].forEach(id=>document.getElementById(id).classList.remove('error'));
+      el.innerHTML=`<div class="placeholder"><span class="pl-icon">✦</span><p>Digite o valor do orçamento para simular<br>as condições de pagamento.</p></div>`;
+      return;
+    }
+    if(!validateDates(dE,dP,valor)) return;
+    cardCtr=0;
+
+    // Boleto: aparece apenas no modo "com entrada" (à vista, 2×, 3×, 4×, 5×)
+    const bLabels={1:'À vista',2:'2× Boleto',3:'3× Boleto',4:'4× Boleto',5:'5× Boleto'};
+    let bC=''; if(!semEntrada) for(let n=1;n<=5;n++) bC+=renderBoleto(valor,n,semEntrada,bLabels[n],dE,dP);
+
+    // Santander: 6× a 12× parcelas
+    let sC=''; for(let n=6;n<=12;n++) sC+=renderSantander(valor,n,semEntrada,dE,dP,fatores);
+
+    // Cartão: débito, crédito à vista, 2× a 5×
+    const ops=[
+      {label:'Débito',         desc:_cfgCartao[0], n:1},
+      {label:'Crédito à vista',desc:_cfgCartao[1], n:1},
+      {label:'2× Crédito',    desc:_cfgCartao[2], n:2},
+      {label:'3× Crédito',    desc:_cfgCartao[3], n:3},
+      {label:'4× Crédito',    desc:_cfgCartao[4], n:4},
+      {label:'5× Crédito',    desc:_cfgCartao[5], n:5}
+    ];
+    let cC=''; for(const o of ops) cC+=renderCartao(valor,o.label,o.desc,o.n,dE,dP);
+
+    el.innerHTML=`
+      ${bC ? `<div class="section s-boleto">
+        <div class="section-header"><div class="section-rule"></div><div class="section-label">Boleto · Cheque · Dinheiro</div><div class="section-rule"></div></div>
+        <div class="cards-grid">${bC}</div>
+      </div>` : ''}
+      <div class="section s-santander">
+        <div class="section-header"><div class="section-rule"></div><div class="section-label">Financiamento Santander</div><div class="section-rule"></div></div>
+        <div class="cards-grid">${sC}</div>
+      </div>
+      ${bC ? `<div class="section s-cartao">
+        <div class="section-header"><div class="section-rule"></div><div class="section-label">Cartão Visa · Mastercard</div><div class="section-rule"></div></div>
+        <div class="cards-grid">${cC}</div>
+      </div>` : ''}`;
+  }
+
+  // Máscara monetária no campo de valor: converte dígitos para formato R$ 1.234,56
+  document.getElementById('valor').addEventListener('input', function(e) {
+    let d=e.target.value.replace(/\D/g,'');
+    if(!d){e.target.value='';atualizar();return;}
+    e.target.value=(parseInt(d,10)/100).toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+    atualizar();
+  });
+
+  // Recalcula ao mudar o modo (com entrada / sem entrada)
+  document.querySelectorAll('input[name="modo"]').forEach(r => r.addEventListener('change', atualizar));
+</script>
+</body>
+</html>

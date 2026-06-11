@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal Admin — Prima Linea</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --cream: #F9F6F2; --cream-dk: #F0EAE1; --border: #E3DAD0;
+      --copper: #A67B5B; --copper-dk: #8A6449; --espresso: #6B5744;
+      --ink: #1C1A19; --ink-mid: #3D3530; --stone: #7A6E66; --stone-lt: #ADA49B;
+      --white: #FFFFFF; --green: #3D7A5A; --red: #C0392B;
+    }
+    body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--ink); min-height: 100vh; }
+
+    /* ── Login ── */
+    #login-screen {
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    }
+    .login-box {
+      background: var(--white); border: 1px solid var(--border); border-radius: 18px;
+      padding: 3rem 2.5rem; width: 360px;
+      box-shadow: 0 8px 40px rgba(166,123,91,.1);
+    }
+    .login-logo {
+      font-family: 'Inter', sans-serif; font-weight: 300; font-size: 1rem;
+      letter-spacing: .25em; text-transform: uppercase; color: var(--ink);
+      margin-bottom: 0.25rem;
+    }
+    .login-sub {
+      font-family: 'Cormorant Garamond', serif; font-style: italic;
+      font-size: 0.85rem; color: var(--stone-lt); margin-bottom: 2.5rem;
+    }
+    .login-field { display: flex; flex-direction: column; gap: .45rem; margin-bottom: 1.1rem; }
+    .login-field label { font-size: .68rem; font-weight: 600; text-transform: uppercase; letter-spacing: .12em; color: var(--copper); }
+    .login-field input {
+      border: 1.5px solid var(--border); border-radius: 9px; padding: .65rem .9rem;
+      font-size: .9rem; font-family: 'Inter', sans-serif; color: var(--ink);
+      background: var(--cream); outline: none; transition: border-color .2s;
+    }
+    .login-field input:focus { border-color: var(--copper); background: var(--white); }
+    .login-err { font-size: .72rem; color: var(--red); margin-top: -.5rem; margin-bottom: .5rem; display: none; }
+    .login-err.show { display: block; }
+    .btn-primary {
+      width: 100%; padding: .75rem; border-radius: 999px; border: none; cursor: pointer;
+      background: var(--ink); color: var(--white); font-size: .85rem; font-weight: 500;
+      font-family: 'Inter', sans-serif; letter-spacing: .04em;
+      transition: background .2s; margin-top: .5rem;
+    }
+    .btn-primary:hover { background: var(--ink-mid); }
+
+    /* ── Admin shell ── */
+    #admin-screen { display: none; }
+    header {
+      background: var(--ink); padding: 1.1rem 2.5rem;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .hdr-logo { font-weight: 300; font-size: .9rem; letter-spacing: .22em; text-transform: uppercase; color: var(--white); }
+    .hdr-right { display: flex; align-items: center; gap: 1.5rem; }
+    .hdr-sub { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: .85rem; color: var(--stone-lt); }
+    .btn-logout {
+      font-size: .7rem; font-weight: 500; letter-spacing: .08em; text-transform: uppercase;
+      color: var(--stone-lt); background: none; border: 1px solid #3D3530; border-radius: 999px;
+      padding: .3rem .85rem; cursor: pointer; font-family: 'Inter', sans-serif;
+      transition: color .2s, border-color .2s;
+    }
+    .btn-logout:hover { color: var(--white); border-color: var(--stone-lt); }
+
+    .container { max-width: 860px; margin: 0 auto; padding: 2.5rem 2rem 5rem; }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed; top: 1.5rem; right: 1.5rem; z-index: 999;
+      background: var(--ink); color: var(--white); border-radius: 10px;
+      padding: .75rem 1.25rem; font-size: .82rem; font-weight: 500;
+      opacity: 0; transform: translateY(-8px); transition: opacity .3s, transform .3s;
+      pointer-events: none;
+    }
+    #toast.show { opacity: 1; transform: translateY(0); }
+    #toast.error { background: var(--red); }
+
+    /* ── Section card ── */
+    .section-card {
+      background: var(--white); border: 1px solid var(--border); border-radius: 14px;
+      margin-bottom: 1.5rem; overflow: hidden;
+    }
+    .section-card-header {
+      padding: 1.1rem 1.5rem; display: flex; align-items: center; gap: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .section-card-header h2 {
+      font-size: .68rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: .12em; color: var(--copper); flex: 1;
+    }
+    .section-card-header p { font-size: .78rem; color: var(--stone); }
+    .section-card-body { padding: 1.25rem 1.5rem; }
+
+    /* ── Tables ── */
+    .edit-table { width: 100%; border-collapse: collapse; }
+    .edit-table th {
+      font-size: .63rem; font-weight: 600; text-transform: uppercase; letter-spacing: .1em;
+      color: var(--stone-lt); padding: .4rem .5rem; text-align: left; border-bottom: 1px solid var(--border);
+    }
+    .edit-table th.right { text-align: right; }
+    .edit-table td { padding: .4rem .5rem; border-bottom: 1px solid var(--cream-dk); vertical-align: middle; }
+    .edit-table tr:last-child td { border-bottom: none; }
+    .row-label { font-size: .8rem; color: var(--ink-mid); font-weight: 400; }
+    .row-sub { font-size: .7rem; color: var(--stone-lt); }
+
+    /*
+      table-layout: fixed garante que as colunas fiquem alinhadas entre os cards
+      de Multiplicadores 30d e 60d, e entre os dois cards de Descontos.
+      Sem isso, cada tabela calcula larguras de forma independente.
+    */
+    .table-mult, .table-desc { table-layout: fixed; width: 100%; }
+    .num-input::-webkit-inner-spin-button,
+    .num-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    /* Remove as setinhas de incremento do campo numérico — valor deve ser digitado */
+    .num-input { -moz-appearance: textfield; }
+    .num-input {
+      width: 100%; max-width: 200px; border: 1.5px solid var(--border); border-radius: 8px;
+      padding: .38rem .6rem; font-size: .82rem; font-family: 'Inter', sans-serif;
+      color: var(--ink); background: var(--cream); outline: none; text-align: right;
+      transition: border-color .2s;
+    }
+    .num-input:focus { border-color: var(--copper); background: var(--white); }
+    /* Destaque visual quando o valor foi alterado mas ainda não salvo */
+    .num-input.changed { border-color: var(--copper); background: rgba(166,123,91,.05); }
+
+    .td-right { text-align: right; }
+
+    /* Fator single */
+    .single-field { display: flex; align-items: center; gap: 1rem; }
+    .single-field .num-input { max-width: 220px; }
+    .single-field .hint { font-size: .75rem; color: var(--stone-lt); }
+
+    /* ── Bottom bar ── */
+    .bottom-bar {
+      position: sticky; bottom: 0; background: var(--white); border-top: 1px solid var(--border);
+      padding: 1rem 2rem; display: flex; align-items: center; justify-content: flex-end; gap: 1rem;
+      box-shadow: 0 -4px 20px rgba(28,26,25,.07);
+    }
+    .btn-reset {
+      padding: .6rem 1.4rem; border-radius: 999px; border: 1.5px solid var(--border);
+      font-size: .8rem; font-weight: 500; cursor: pointer; background: var(--cream);
+      color: var(--stone); font-family: 'Inter', sans-serif; letter-spacing: .02em;
+      transition: all .15s;
+    }
+    .btn-reset:hover { border-color: var(--copper); color: var(--copper); }
+    .btn-save {
+      padding: .6rem 2rem; border-radius: 999px; border: none;
+      font-size: .8rem; font-weight: 500; cursor: pointer; background: var(--copper);
+      color: var(--white); font-family: 'Inter', sans-serif; letter-spacing: .04em;
+      transition: background .15s;
+    }
+    .btn-save:hover { background: var(--copper-dk); }
+    .save-status { font-size: .75rem; color: var(--stone-lt); margin-right: auto; }
+
+    /* ── Simulador Conciliação ── */
+    .sim-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .75rem; margin-bottom: 1.25rem; }
+    .sim-field { display: flex; flex-direction: column; gap: .35rem; }
+    .sim-field label { font-size: .63rem; font-weight: 600; text-transform: uppercase; letter-spacing: .1em; color: var(--stone-lt); }
+    .sim-field input, .sim-field select {
+      border: 1.5px solid var(--border); border-radius: 8px; padding: .45rem .7rem;
+      font-size: .85rem; font-family: 'Inter', sans-serif; color: var(--ink);
+      background: var(--cream); outline: none; transition: border-color .2s; width: 100%;
+    }
+    .sim-field input:focus, .sim-field select:focus { border-color: var(--copper); background: var(--white); }
+    .btn-calcular {
+      padding: .55rem 1.8rem; border-radius: 999px; border: none; cursor: pointer;
+      background: var(--copper); color: var(--white); font-size: .8rem; font-weight: 500;
+      font-family: 'Inter', sans-serif; letter-spacing: .04em; transition: background .15s;
+    }
+    .btn-calcular:hover { background: var(--copper-dk); }
+    .sim-result { display: none; margin-top: 1.25rem; border-top: 1px solid var(--border); padding-top: 1.25rem; }
+    .sim-result.show { display: block; }
+    .sim-result-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: .75rem; margin-bottom: 1.25rem; }
+    .sim-kpi { background: var(--cream); border-radius: 10px; padding: .85rem 1rem; }
+    .sim-kpi .kpi-label { font-size: .6rem; font-weight: 600; text-transform: uppercase; letter-spacing: .1em; color: var(--stone-lt); margin-bottom: .2rem; }
+    .sim-kpi .kpi-val { font-size: 1.05rem; font-weight: 600; color: var(--ink); }
+    .sim-kpi .kpi-val.green { color: var(--green); }
+    .sim-kpi .kpi-val.red { color: var(--red); }
+  </style>
+</head>
+<body>
+
+<!-- ── Login ─────────────────────────────────────────────────────────────────
+     Autenticação simples com credenciais hardcoded no JS.
+     ATENÇÃO: Antes de colocar este portal em produção (servidor público),
+     substituir por autenticação real no servidor (HTTP Basic Auth, etc.).
+     As credenciais ficam visíveis para quem inspecionar o código-fonte.
+──────────────────────────────────────────────────────────────────────────── -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">Prima Linea</div>
+    <div class="login-sub">Portal Administrativo</div>
+    <div class="login-field">
+      <label>Usuário</label>
+      <input type="text" id="login-user" placeholder="Admin" autocomplete="username">
+    </div>
+    <div class="login-field">
+      <label>Senha</label>
+      <input type="password" id="login-pass" placeholder="••••••" autocomplete="current-password">
+    </div>
+    <div class="login-err" id="login-err">Usuário ou senha incorretos.</div>
+    <button class="btn-primary" onclick="doLogin()">Entrar</button>
+  </div>
+</div>
+
+<!-- ── Admin ── -->
+<div id="admin-screen">
+  <header>
+    <div class="hdr-logo">Prima Linea</div>
+    <div class="hdr-right">
+      <div class="hdr-sub">Portal Administrativo</div>
+      <button class="btn-logout" onclick="doLogout()">Sair</button>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <!-- Aviso última atualização: fica verde se atualizado recentemente,
+         vermelho se passou mais de 30 dias sem atualizar os fatores Santander -->
+    <div id="update-notice" style="display:none; margin-bottom:1.25rem; padding:.75rem 1.1rem; background:#FFF8F0; border:1px solid #E8D5B7; border-radius:10px; font-size:.78rem; color:var(--espresso); display:flex; align-items:center; gap:.5rem;">
+      <span style="font-size:1rem">⚠️</span>
+      <span id="update-notice-text"></span>
+    </div>
+
+    <!-- 1. Simulador de Conciliação Bancária ────────────────────────────────
+         Permite simular quanto a Prima Linea vai receber de um contrato
+         específico, considerando entrada, retenção e prazo Santander.
+         Útil para conferir os extratos bancários (conciliação).
+    ──────────────────────────────────────────────────────────────────────── -->
+    <div class="section-card">
+      <div class="section-card-header">
+        <h2>Simulador de Conciliação Bancária</h2>
+        <p>Calcule o valor líquido esperado para um contrato específico</p>
+      </div>
+      <div class="section-card-body">
+        <div class="sim-grid">
+          <div class="sim-field">
+            <label>Valor do Contrato (R$)</label>
+            <input type="number" id="sim-valor" placeholder="0,00" min="0" step="0.01">
+          </div>
+          <div class="sim-field">
+            <label>Nº de Parcelas</label>
+            <select id="sim-parcelas">
+              <option value="6">6×</option>
+              <option value="7">7×</option>
+              <option value="8">8×</option>
+              <option value="9">9×</option>
+              <option value="10">10×</option>
+              <option value="11">11×</option>
+              <option value="12">12×</option>
+            </select>
+          </div>
+          <div class="sim-field">
+            <label>Modalidade</label>
+            <select id="sim-modo">
+              <option value="com">Com entrada</option>
+              <option value="sem30">Sem entrada · 30 dias</option>
+              <option value="sem60">Sem entrada · 60 dias</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn-calcular" onclick="calcularConciliacao()">Calcular</button>
+        <div class="sim-result" id="sim-result">
+          <div class="sim-result-grid">
+            <div class="sim-kpi"><div class="kpi-label">Entrada (direto na conta)</div><div class="kpi-val" id="sim-kpi-entrada">—</div></div>
+            <div class="sim-kpi"><div class="kpi-label">Total Financiado (Santander)</div><div class="kpi-val" id="sim-kpi-financiado">—</div></div>
+            <div class="sim-kpi"><div class="kpi-label">Retenção Santander</div><div class="kpi-val red" id="sim-kpi-retencao">—</div></div>
+            <div class="sim-kpi"><div class="kpi-label">Valor Líquido Esperado</div><div class="kpi-val green" id="sim-kpi-liquido">—</div></div>
+            <div class="sim-kpi"><div class="kpi-label">Líquido Santander</div><div class="kpi-val green" id="sim-kpi-liq-sant">—</div></div>
+            <div class="sim-kpi"><div class="kpi-label">% Líquido sobre Contrato</div><div class="kpi-val green" id="sim-kpi-pct">—</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Valor Líquido Santander ──────────────────────────────────────────
+         Tabela de referência calculada automaticamente com base nos fatores
+         e taxas de retenção atuais, usando R$ 1.000,00 como base.
+         Mostra quanto a empresa recebe de cada modalidade por real financiado.
+    ──────────────────────────────────────────────────────────────────────── -->
+    <div class="section-card">
+      <div class="section-card-header">
+        <h2>Valor Líquido Recebido — Santander</h2>
+        <p>Entrada + (financiado − retenção) · base R$ 1.000,00</p>
+      </div>
+      <div class="section-card-body">
+        <table class="edit-table">
+          <thead>
+            <tr>
+              <th>Parcelas</th>
+              <th class="right">Líquido 30d</th>
+              <th class="right">% 30d</th>
+              <th class="right">Líquido 60d</th>
+              <th class="right">% 60d</th>
+            </tr>
+          </thead>
+          <tbody id="liquido-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 3. Descontos Boleto ─────────────────────────────────────────────────
+         Percentual de desconto aplicado sobre o valor do orçamento nas
+         vendas à vista, cheque, dinheiro ou boleto parcelado.
+         Os valores são armazenados internamente como decimais (ex: 0.20 = 20%).
+         Na tabela são exibidos como percentual para facilitar a leitura.
+    ──────────────────────────────────────────────────────────────────────── -->
+    <div class="section-card">
+      <div class="section-card-header">
+        <h2>Descontos — Boleto · Cheque · Dinheiro</h2>
+        <p>Percentual de desconto aplicado sobre o valor do orçamento</p>
+      </div>
+      <div class="section-card-body">
+        <table class="edit-table table-desc">
+          <colgroup><col style="width:40%"><col style="width:20%"><col style="width:20%"><col style="width:20%"></colgroup>
+          <thead>
+            <tr><th>Parcelas</th><th class="right" style="color:var(--stone-lt)">Anterior</th><th class="right">Atual</th><th class="right">Novo valor</th></tr>
+          </thead>
+          <tbody id="boleto-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 4. Descontos Cartão ─────────────────────────────────────────────────
+         Percentual de desconto por modalidade de cartão.
+         Armazenados como decimais, exibidos como percentual.
+    ──────────────────────────────────────────────────────────────────────── -->
+    <div class="section-card">
+      <div class="section-card-header">
+        <h2>Descontos — Cartão Visa / Mastercard</h2>
+        <p>Percentual de desconto por modalidade</p>
+      </div>
+      <div class="section-card-body">
+        <table class="edit-table table-desc">
+          <colgroup><col style="width:40%"><col style="width:20%"><col style="width:20%"><col style="width:20%"></colgroup>
+          <thead>
+            <tr><th>Modalidade</th><th class="right" style="color:var(--stone-lt)">Anterior</th><th class="right">Atual</th><th class="right">Novo valor</th></tr>
+          </thead>
+          <tbody id="cartao-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 5. Fator de Correção ────────────────────────────────────────────────
+         O Santander não financia o valor integral do contrato.
+         O fator de correção representa o desconto aplicado antes do cálculo.
+         Fórmula: O1 = valor × (1 − fatorCorrecao)
+         Exemplo: fator 0.1665 → O1 = valor × 0.8335 (83,35% do contrato)
+         Este valor vem da planilha fornecida pelo Santander.
+    ──────────────────────────────────────────────────────────────────────── -->
+    <div class="section-card">
+      <div class="section-card-header">
+        <h2>Fator de Correção Santander</h2>
+        <p>Base de cálculo do financiamento</p>
+      </div>
+      <div class="section-card-body">
+        <table class="edit-table table-mult">
+          <colgroup><col style="width:40%"><col style="width:20%"><col style="width:20%"><col style="width:20%"></colgroup>
+          <thead>
+            <tr>
+              <th></th>
+              <th class="right" style="color:var(--stone-lt)">Anterior</th>
+              <th class="right">Atual</th>
+              <th class="right">Novo valor</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="row-label">Fator de correção</td>
+              <td class="td-right" style="color:var(--stone-lt);font-size:.75rem" id="fc-anterior">—</td>
+              <td class="td-right" style="font-size:.82rem" id="fc-atual">—</td>
+              <td class="td-right">
+                <input type="number" class="num-input" id="fc-fator" step="0.0001" min="0" max="1">
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <!-- Explicação dinâmica: exibe o fator atual convertido em percentual -->
+        <p style="margin:.4rem 0 0;font-size:.78rem;color:var(--stone-lt)">
+          <span id="fc-hint"></span>
+        </p>
+      </div>
+    </div>
+
+    <!-- 6. Fatores Multiplicadores 30d ──────────────────────────────────────
+         Fatores fornecidos pelo Santander para cálculo das parcelas mensais.
+         Prazo de pagamento ao lojista: 30 dias após cada parcela.
+
+         Como usar: vêm da planilha oficial do Santander (atualizada periodicamente).
+         Índice 0 = 1× parcela, índice 11 = 12× parcelas.
+
+         Fórmula com entrada (n parcelas total):
+           - entrada = O1 / n
+           - parcela mensal = (O1 − entrada) × fator[n−2]
+           (usa índice n−2 porque apenas n−1 parcelas passam pelo Santander)
+
+         Fórmula sem entrada (n parcelas total):
+           - parcela mensal = O1 × fator[n−1]
+    ──────────────────────────────────────────────────────────────────────── -->
+    <div class="section-card">
+      <div class="section-card-header">
+        <h2>Fatores Multiplicadores — Santander</h2>
+        <p>Prazo 30 dias · parcelas 1 a 12</p>
+      </div>
+      <div class="section-card-body">
+        <table class="edit-table table-mult">
+          <colgroup><col style="width:40%"><col style="width:20%"><col style="width:20%"><col style="width:20%"></colgroup>
+          <thead>
+            <tr>
+              <th>Nº de Parcelas</th>
+              <th class="right" style="color:var(--stone-lt)">Anterior</th>
+              <th class="right">Atual</th>
+              <th class="right">Novo valor</th>
+            </tr>
+          </thead>
+          <tbody id="sant-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 7. Fatores Multiplicadores 60d ──────────────────────────────────────
+         Mesma lógica dos fatores 30d, porém para o produto "sem entrada 60 dias"
+         do Santander, onde o lojista recebe em 60 dias após cada parcela.
+         Os fatores 60d são distintos e geralmente maiores (maior custo financeiro).
+    ──────────────────────────────────────────────────────────────────────── -->
+    <div class="section-card">
+      <div class="section-card-header">
+        <h2>Fatores Multiplicadores — Santander</h2>
+        <p>Prazo 60 dias · parcelas 1 a 12</p>
+      </div>
+      <div class="section-card-body">
+        <table class="edit-table table-mult">
+          <colgroup><col style="width:40%"><col style="width:20%"><col style="width:20%"><col style="width:20%"></colgroup>
+          <thead>
+            <tr>
+              <th>Nº de Parcelas</th>
+              <th class="right" style="color:var(--stone-lt)">Anterior</th>
+              <th class="right">Atual</th>
+              <th class="right">Novo valor</th>
+            </tr>
+          </thead>
+          <tbody id="sant60-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="bottom-bar">
+    <span class="save-status" id="save-status"></span>
+    <button class="btn-save" onclick="salvar()">Salvar alterações</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+  // ── Credenciais ──────────────────────────────────────────────────────────────
+  // ATENÇÃO: credenciais visíveis no código-fonte. Uso interno apenas.
+  // Antes do deploy em produção, implementar autenticação no servidor.
+  const CREDS = { user: 'Admin', pass: 'Senha' };
+
+  // Chave usada para salvar/ler configurações no localStorage do navegador.
+  // O simulador front-end (index.html) lê esta mesma chave — ambos precisam
+  // estar no mesmo navegador/dispositivo para compartilhar os valores.
+  const STORAGE_KEY = 'pl_config';
+
+  // ── Valores padrão ───────────────────────────────────────────────────────────
+  // Estes valores vêm da planilha oficial do Santander (Mega Planilha Prima Linea).
+  // São usados quando não há nada salvo no localStorage (primeira vez que abre).
+  // Ao salvar pelo portal, os valores do localStorage passam a ter precedência.
+  const DEFAULTS = {
+    fatorCorrecao: 0.1665,         // 16,65% — aplicado antes do cálculo das parcelas
+    santander: [                   // Fatores multiplicadores 30 dias (índice 0 = 1×, 11 = 12×)
+      1.0253, 0.5190540118, 0.350340458, 0.2660100047, 0.2154327824,
+      0.1817321657, 0.1567768837, 0.1387546517, 0.1247476901,
+      0.1135514091, 0.1043992506, 0.09678017505
+    ],
+    santander60: [                 // Fatores multiplicadores 60 dias (índice 0 = 1×, 11 = 12×)
+      1.05124, 0.53219, 0.3592, 0.27274, 0.22088,
+      0.18633, 0.16051, 0.14206, 0.12772,
+      0.11625, 0.10688, 0.09908
+    ],
+    boleto: [0.20, 0.16, 0.15, 0.14, 0.13],   // Descontos boleto: à vista, 2×, 3×, 4×, 5×
+    cartao: [0.16, 0.14, 0.13, 0.12, 0.11, 0.10] // Descontos cartão: débito, crédito à vista, 2×, 3×, 4×, 5×
+  };
+
+  const CARTAO_LABELS = ['Débito', 'Crédito à vista', '2× Crédito', '3× Crédito', '4× Crédito', '5× Crédito'];
+
+  // ── Taxas de retenção Santander ──────────────────────────────────────────────
+  // O Santander retém um percentual do total financiado como garantia.
+  // Fonte: colunas L e P da planilha oficial. Índice 0 = 1×, índice 11 = 12×.
+  //
+  // Regra de indexação (importante!):
+  //   - Com entrada, n parcelas total → usa índice n−2
+  //     (a entrada vai direto para a loja; apenas n−1 parcelas passam pelo Santander)
+  //   - Sem entrada, n parcelas total → usa índice n−1
+  //     (todas as n parcelas passam pelo Santander)
+  const RETENCAO_30 = [0.025,0.0367,0.0485,0.0602,0.0716,0.0829,0.0888,0.0991,0.1093,0.1193,0.1292,0.1389];
+  const RETENCAO_60 = [0.0487,0.0605,0.0720,0.0834,0.0945,0.1055,0.1100,0.1201,0.1300,0.1398,0.1495,0.1590];
+
+  // ── Cálculo Santander ────────────────────────────────────────────────────────
+  // Calcula entrada, parcela mensal, total financiado, retenção e líquido
+  // para um contrato de valor `valor` com `n` parcelas no modo informado.
+  //
+  // Parâmetros:
+  //   valor — valor total do contrato (R$)
+  //   n     — número de parcelas (6 a 12)
+  //   modo  — 'com' (com entrada), 'sem30' (sem entrada 30d), 'sem60' (sem entrada 60d)
+  //   cfg   — configurações atuais (fatores e fator de correção)
+  function calcSantander(valor, n, modo, cfg) {
+    const fator  = cfg.fatorCorrecao ?? DEFAULTS.fatorCorrecao;
+    const sant30 = cfg.santander   ?? DEFAULTS.santander;
+    const sant60 = cfg.santander60 ?? DEFAULTS.santander60;
+
+    // O1 = base de cálculo após o desconto do fator de correção
+    const O1 = valor * (1 - fator);
+
+    if (modo === 'com') {
+      // Com entrada: cliente paga 1/n na entrada, restante (n−1 parcelas) via Santander
+      const entrada    = O1 / n;
+      const pm         = (O1 - O1/n) * sant30[n-2]; // índice n−2 porque são n−1 parcelas
+      const financiado = pm * (n - 1);
+      const retencao   = financiado * RETENCAO_30[n-2];
+      return { entrada, pm, financiado, retencao, liquido: entrada + (financiado - retencao), prazo: 30 };
+    } else {
+      // Sem entrada: todas as n parcelas passam pelo Santander
+      const is60 = modo === 'sem60';
+      const sant = is60 ? sant60 : sant30;
+      const ret  = is60 ? RETENCAO_60 : RETENCAO_30;
+      const pm   = O1 * sant[n-1]; // índice n−1 porque são n parcelas
+      const financiado = pm * n;
+      const retencao   = financiado * ret[n-1];
+      return { entrada: 0, pm, financiado, retencao, liquido: financiado - retencao, prazo: is60 ? 60 : 30 };
+    }
+  }
+
+  // ── Tabela de valor líquido ──────────────────────────────────────────────────
+  // Recalcula e exibe a tabela de referência (card "Valor Líquido Recebido")
+  // sempre que os fatores são salvos ou a página é carregada.
+  function buildLiquidoTable(cfg) {
+    const fmtR = v => 'R$ ' + v.toFixed(2).replace('.', ',');
+    const fmtP = v => (v * 100).toFixed(2).replace('.', ',') + '%';
+    const BASE = 1000; // base de R$ 1.000,00 para facilitar leitura proporcional
+    let rows = '';
+    for (let n = 6; n <= 12; n++) {
+      const r30 = calcSantander(BASE, n, 'com', cfg);
+      const r60 = calcSantander(BASE, n, 'sem60', cfg);
+      rows += `<tr>
+        <td class="row-label">${n}×</td>
+        <td class="td-right" style="font-weight:600">${fmtR(r30.liquido)}</td>
+        <td class="td-right" style="color:var(--green);font-weight:600">${fmtP(r30.liquido/BASE)}</td>
+        <td class="td-right" style="font-weight:600">${fmtR(r60.liquido)}</td>
+        <td class="td-right" style="color:var(--green);font-weight:600">${fmtP(r60.liquido/BASE)}</td>
+      </tr>`;
+    }
+    document.getElementById('liquido-body').innerHTML = rows;
+  }
+
+  // ── Simulador de conciliação ─────────────────────────────────────────────────
+  // Calcula o detalhamento financeiro de um contrato específico para fins de
+  // conferência bancária. Mostra exatamente quanto deve aparecer na conta.
+  function calcularConciliacao() {
+    const valor = parseFloat(document.getElementById('sim-valor').value);
+    if (!valor || valor <= 0) { showToast('Informe um valor válido.', true); return; }
+    const n    = parseInt(document.getElementById('sim-parcelas').value);
+    const modo = document.getElementById('sim-modo').value;
+    const cfg  = getConfig();
+    const r    = calcSantander(valor, n, modo, cfg);
+
+    const fmtR = v => 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const fmtP = v => (v * 100).toFixed(2).replace('.', ',') + '%';
+
+    document.getElementById('sim-kpi-entrada').textContent    = fmtR(r.entrada);
+    document.getElementById('sim-kpi-financiado').textContent = fmtR(r.financiado);
+    document.getElementById('sim-kpi-retencao').textContent   = '− ' + fmtR(r.retencao);
+    document.getElementById('sim-kpi-liquido').textContent    = fmtR(r.liquido);
+    document.getElementById('sim-kpi-liq-sant').textContent   = fmtR(r.financiado - r.retencao);
+    document.getElementById('sim-kpi-pct').textContent        = fmtP(r.liquido / valor);
+
+    document.getElementById('sim-result').classList.add('show');
+  }
+
+  // ── Autenticação ─────────────────────────────────────────────────────────────
+  function doLogin() {
+    const u = document.getElementById('login-user').value.trim();
+    const p = document.getElementById('login-pass').value;
+    const err = document.getElementById('login-err');
+    if (u === CREDS.user && p === CREDS.pass) {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('admin-screen').style.display = 'block';
+      loadForm(); // carrega os valores salvos nos campos do formulário
+      err.classList.remove('show');
+    } else {
+      err.classList.add('show');
+    }
+  }
+  function doLogout() {
+    document.getElementById('admin-screen').style.display = 'none';
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('login-pass').value = '';
+  }
+
+  // Enter key no formulário de login
+  ['login-user','login-pass'].forEach(id =>
+    document.getElementById(id).addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); }));
+
+  // ── Formatação de data/hora ──────────────────────────────────────────────────
+  function formatTS(d) {
+    return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  }
+
+  // Exibe ou oculta o aviso de atualização no topo.
+  // Fica verde se atualizado há menos de 30 dias; vermelho se passou mais de 30 dias.
+  function showUpdateNotice(date) {
+    const el = document.getElementById('update-notice');
+    const txt = document.getElementById('update-notice-text');
+    if (!date) { el.style.display = 'none'; return; }
+    const dias = Math.floor((Date.now() - date.getTime()) / 86400000);
+    const ts = formatTS(date);
+    if (dias >= 30) {
+      txt.innerHTML = `<strong>Atenção:</strong> taxas Santander atualizadas há ${dias} dias (${ts}). Verifique se os fatores ainda estão corretos.`;
+      el.style.background = '#FFF0F0';
+      el.style.borderColor = '#E8B7B7';
+      el.style.color = 'var(--red)';
+    } else {
+      txt.innerHTML = `Taxas Santander atualizadas em <strong>${ts}</strong>.`;
+      el.style.background = '#F0FFF6';
+      el.style.borderColor = '#B7E8C8';
+      el.style.color = 'var(--green)';
+    }
+    el.style.display = 'flex';
+  }
+
+  // ── Persistência (localStorage) ──────────────────────────────────────────────
+  // Os valores salvos ficam no navegador do dispositivo onde o admin foi usado.
+  // O simulador (index.html) lê estes mesmos dados se aberto no mesmo navegador.
+  // Para sincronizar entre dispositivos, seria necessário um servidor backend.
+  function getConfig() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : JSON.parse(JSON.stringify(DEFAULTS));
+    } catch { return JSON.parse(JSON.stringify(DEFAULTS)); }
+  }
+
+  // ── Carrega o formulário ─────────────────────────────────────────────────────
+  // Preenche todas as colunas "Anterior" e "Atual" com os valores salvos.
+  // Os campos "Novo valor" ficam em branco — o usuário preenche apenas o que quer alterar.
+  // Chamado ao fazer login e após cada salvamento.
+  function loadForm() {
+    const cfg = getConfig();
+    showUpdateNotice(cfg._updatedAt ? new Date(cfg._updatedAt) : null);
+
+    const prev = cfg._prev || {}; // valores antes do último salvamento
+
+    document.getElementById('fc-fator').value = '';
+    document.getElementById('fc-fator').placeholder = '';
+    document.getElementById('fc-atual').textContent = String(cfg.fatorCorrecao);
+    document.getElementById('fc-anterior').textContent = prev.fatorCorrecao != null ? String(prev.fatorCorrecao) : '—';
+    // Exibe o fator em formato percentual para facilitar a leitura
+    document.getElementById('fc-hint').textContent = `${cfg.fatorCorrecao} é equivalente a ${(cfg.fatorCorrecao * 100).toFixed(2).replace('.', ',')}%`;
+
+    const prevSant   = prev.santander   || [];
+    const prevSant60 = prev.santander60 || [];
+    const prevBoleto = prev.boleto      || [];
+    const prevCartao = prev.cartao      || [];
+
+    // fmtPrev preserva a precisão total dos fatores (ex: 0.09678017505)
+    // sem arredondar nem adicionar zeros desnecessários
+    const fmtPrev    = v => v != null ? parseFloat(Number(v).toFixed(13)).toString() : '—';
+    const fmtPrevPct = v => v != null ? (v*100).toFixed(2) : '—';
+
+    // Santander 30d rows
+    const sb = document.getElementById('sant-body');
+    sb.innerHTML = '';
+    cfg.santander.forEach((val, i) => {
+      sb.innerHTML += `
+        <tr>
+          <td class="row-label">${i+1}× parcela${i>0?'s':''}</td>
+          <td class="td-right" style="color:var(--stone-lt);font-size:.75rem">${fmtPrev(prevSant[i])}</td>
+          <td class="td-right" style="font-size:.82rem">${fmtPrev(val)}</td>
+          <td class="td-right">
+            <input type="number" class="num-input" id="sant-${i}" value="" step="0.000001" min="0" oninput="markChanged(this)">
+          </td>
+        </tr>`;
+    });
+
+    // Santander 60d rows
+    const sb60 = document.getElementById('sant60-body');
+    sb60.innerHTML = '';
+    (cfg.santander60 ?? DEFAULTS.santander60).forEach((val, i) => {
+      sb60.innerHTML += `
+        <tr>
+          <td class="row-label">${i+1}× parcela${i>0?'s':''}</td>
+          <td class="td-right" style="color:var(--stone-lt);font-size:.75rem">${fmtPrev(prevSant60[i])}</td>
+          <td class="td-right" style="font-size:.82rem">${fmtPrev(val)}</td>
+          <td class="td-right">
+            <input type="number" class="num-input" id="sant60-${i}" value="" step="0.000001" min="0" oninput="markChanged(this)">
+          </td>
+        </tr>`;
+    });
+
+    // Boleto rows
+    const bb = document.getElementById('boleto-body');
+    bb.innerHTML = '';
+    const bLabels = ['À vista (1×)', '2× parcelas', '3× parcelas', '4× parcelas', '5× parcelas'];
+    cfg.boleto.forEach((val, i) => {
+      const cur = (val*100).toFixed(2); // converte de decimal para percentual para exibição
+      bb.innerHTML += `
+        <tr>
+          <td class="row-label">${bLabels[i]}</td>
+          <td class="td-right" style="color:var(--stone-lt);font-size:.75rem">${fmtPrevPct(prevBoleto[i])}</td>
+          <td class="td-right" style="font-size:.82rem">${cur}</td>
+          <td class="td-right">
+            <input type="number" class="num-input" id="boleto-${i}" value="" step="0.01" min="0" max="100" oninput="markChanged(this)">
+          </td>
+        </tr>`;
+    });
+
+    // Cartão rows
+    const cb = document.getElementById('cartao-body');
+    cb.innerHTML = '';
+    cfg.cartao.forEach((val, i) => {
+      const cur = (val*100).toFixed(2);
+      cb.innerHTML += `
+        <tr>
+          <td class="row-label">${CARTAO_LABELS[i]}</td>
+          <td class="td-right" style="color:var(--stone-lt);font-size:.75rem">${fmtPrevPct(prevCartao[i])}</td>
+          <td class="td-right" style="font-size:.82rem">${cur}</td>
+          <td class="td-right">
+            <input type="number" class="num-input" id="cartao-${i}" value="" step="0.01" min="0" max="100" oninput="markChanged(this)">
+          </td>
+        </tr>`;
+    });
+
+    document.getElementById('save-status').textContent = '';
+    buildLiquidoTable(cfg);
+  }
+
+  // Marca visualmente o campo como alterado (borda cobre) até o próximo salvamento
+  function markChanged(el) { el.classList.add('changed'); }
+
+  // ── Salvar ───────────────────────────────────────────────────────────────────
+  // Lê todos os campos "Novo valor". Se o campo estiver em branco, mantém o valor atual.
+  // Guarda os valores anteriores em _prev para exibir na coluna "Anterior".
+  // Após salvar, atualiza o formulário para refletir os novos valores.
+  function salvar() {
+    if (!confirm('Você tem certeza que deseja alterar estes valores?')) return;
+
+    const cur = getConfig(); // lê os valores atuais antes de sobrescrever
+
+    const cfg = {
+      // Se o campo estiver em branco, mantém o valor atual (cur.fatorCorrecao)
+      fatorCorrecao: (() => {
+        const inp = document.getElementById('fc-fator');
+        const v = inp.value.trim() !== '' ? parseFloat(inp.value) : NaN;
+        return isNaN(v) ? cur.fatorCorrecao : v;
+      })(),
+      santander: [],
+      santander60: [],
+      boleto: [],
+      cartao: []
+    };
+
+    // Santander 30d: lê cada campo; mantém valor atual se campo estiver em branco
+    for (let i = 0; i < 12; i++) {
+      const inp = document.getElementById(`sant-${i}`);
+      const v = inp?.value.trim() !== '' ? parseFloat(inp.value) : NaN;
+      cfg.santander.push(isNaN(v) ? cur.santander[i] : v);
+    }
+    // Santander 60d
+    for (let i = 0; i < 12; i++) {
+      const inp = document.getElementById(`sant60-${i}`);
+      const v = inp?.value.trim() !== '' ? parseFloat(inp.value) : NaN;
+      cfg.santander60.push(isNaN(v) ? (cur.santander60 ?? DEFAULTS.santander60)[i] : v);
+    }
+    // Boleto: usuário digita percentual (ex: 20), salvo como decimal (0.20)
+    for (let i = 0; i < 5; i++) {
+      const inp = document.getElementById(`boleto-${i}`);
+      const v = inp?.value.trim() !== '' ? parseFloat(inp.value) : NaN;
+      cfg.boleto.push(isNaN(v) ? cur.boleto[i] : v / 100);
+    }
+    // Cartão: mesma lógica do boleto
+    for (let i = 0; i < 6; i++) {
+      const inp = document.getElementById(`cartao-${i}`);
+      const v = inp?.value.trim() !== '' ? parseFloat(inp.value) : NaN;
+      cfg.cartao.push(isNaN(v) ? cur.cartao[i] : v / 100);
+    }
+
+    const now = new Date();
+    cfg._updatedAt = now.toISOString(); // timestamp usado no aviso de atualização
+    cfg._prev = { // guarda os valores anteriores para exibir na coluna "Anterior"
+      fatorCorrecao: cur.fatorCorrecao,
+      santander: cur.santander,
+      santander60: cur.santander60,
+      boleto: cur.boleto,
+      cartao: cur.cartao
+    };
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg));
+    buildLiquidoTable(cfg);
+    loadForm(); // atualiza as colunas Anterior/Atual na tela
+    document.querySelectorAll('.num-input.changed').forEach(el => el.classList.remove('changed'));
+
+    const ts = formatTS(now);
+    document.getElementById('save-status').textContent = `Salvo em ${ts}`;
+    showUpdateNotice(now);
+
+    showToast('Configurações salvas com sucesso');
+  }
+
+  // ── Reset para padrões ───────────────────────────────────────────────────────
+  // Restaura todos os valores para os defaults da planilha original.
+  // Mantido no código mas sem botão na interface (removido a pedido).
+  function resetDefaults() {
+    if (!confirm('Restaurar todas as taxas para os valores padrão da planilha?')) return;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(JSON.parse(JSON.stringify(DEFAULTS))));
+    loadForm();
+    showToast('Padrões restaurados');
+  }
+
+  // ── Toast ────────────────────────────────────────────────────────────────────
+  // Notificação temporária no canto superior direito. Some após 2,8 segundos.
+  function showToast(msg, isError = false) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = isError ? 'error' : '';
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2800);
+  }
+</script>
+</body>
+</html>
