@@ -196,6 +196,7 @@
 ──────────────────────────────────────────────────────────────────────────── -->
 <div id="login-screen">
   <div class="login-box">
+    <a href="index.html" style="display:inline-block;margin-bottom:1.25rem;font-size:.72rem;color:var(--stone-lt);text-decoration:none;letter-spacing:.04em;transition:color .2s;" onmouseover="this.style.color='var(--copper)'" onmouseout="this.style.color='var(--stone-lt)'">← Voltar para o simulador</a>
     <div class="login-logo">Prima Linea</div>
     <div class="login-sub">Portal Administrativo</div>
     <div class="login-field">
@@ -212,7 +213,8 @@
 </div>
 
 <!-- ── Admin ── -->
-<div id="admin-screen">
+<div id="admin-screen"></div>
+<template id="admin-template">
   <header>
     <div class="hdr-logo">Prima Linea</div>
     <div class="hdr-right">
@@ -459,7 +461,7 @@
     <span class="save-status" id="save-status"></span>
     <button class="btn-save" onclick="salvar()">Salvar alterações</button>
   </div>
-</div>
+</template>
 
 <div id="toast"></div>
 
@@ -608,7 +610,10 @@
     const err = document.getElementById('login-err');
     if (u === CREDS.user && p === CREDS.pass) {
       document.getElementById('login-screen').style.display = 'none';
-      document.getElementById('admin-screen').style.display = 'block';
+      const adminEl = document.getElementById('admin-screen');
+      // Injeta o HTML do admin no DOM apenas após autenticação
+      adminEl.appendChild(document.getElementById('admin-template').content.cloneNode(true));
+      adminEl.style.display = 'block';
       await loadForm();
       err.classList.remove('show');
     } else {
@@ -616,7 +621,9 @@
     }
   }
   function doLogout() {
-    document.getElementById('admin-screen').style.display = 'none';
+    const adminEl = document.getElementById('admin-screen');
+    adminEl.innerHTML = '';
+    adminEl.style.display = 'none';
     document.getElementById('login-screen').style.display = 'flex';
     document.getElementById('login-pass').value = '';
   }
