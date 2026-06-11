@@ -725,11 +725,24 @@
   function bindNativePicker(textId, nativeId) {
     const txt = document.getElementById(textId);
     const nat = document.getElementById(nativeId);
-    txt.closest('.date-wrapper').querySelector('.date-cal-btn').addEventListener('click', function(e) {
+    const btn = txt.closest('.date-wrapper').querySelector('.date-cal-btn');
+    let _openedAt = 0;
+
+    btn.addEventListener('click', function(e) {
       e.preventDefault();
+      if (Date.now() - _openedAt < 200) return;
+      _openedAt = Date.now();
+      nat.style.pointerEvents = 'auto';
       try { nat.showPicker(); } catch(_) { nat.click(); }
     });
+
+    nat.addEventListener('blur', function() {
+      nat.style.pointerEvents = 'none';
+      _openedAt = Date.now();
+    });
+
     nat.addEventListener('change', function() {
+      nat.style.pointerEvents = 'none';
       if(!nat.value) return;
       const [y,m,d] = nat.value.split('-');
       txt.value = `${d}/${m}/${y}`;
