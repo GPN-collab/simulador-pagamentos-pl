@@ -299,10 +299,12 @@
           <thead>
             <tr>
               <th>Parcelas</th>
-              <th class="right">Líquido 30d</th>
-              <th class="right">% 30d</th>
-              <th class="right">Líquido 60d</th>
-              <th class="right">% 60d</th>
+              <th class="right">Com entrada</th>
+              <th class="right">% Com entrada</th>
+              <th class="right">Sem entrada 30d</th>
+              <th class="right">% Sem 30d</th>
+              <th class="right">Sem entrada 60d</th>
+              <th class="right">% Sem 60d</th>
             </tr>
           </thead>
           <tbody id="liquido-body"></tbody>
@@ -567,10 +569,13 @@
     const BASE = 1000; // base de R$ 1.000,00 para facilitar leitura proporcional
     let rows = '';
     for (let n = 6; n <= 12; n++) {
-      const r30 = calcSantander(BASE, n, 'com', cfg);
-      const r60 = calcSantander(BASE, n, 'sem60', cfg);
+      const rCom = calcSantander(BASE, n, 'com',   cfg);
+      const r30  = calcSantander(BASE, n, 'sem30', cfg);
+      const r60  = calcSantander(BASE, n, 'sem60', cfg);
       rows += `<tr>
         <td class="row-label">${n}×</td>
+        <td class="td-right" style="font-weight:600">${fmtR(rCom.liquido)}</td>
+        <td class="td-right" style="color:var(--green);font-weight:600">${fmtP(rCom.liquido/BASE)}</td>
         <td class="td-right" style="font-weight:600">${fmtR(r30.liquido)}</td>
         <td class="td-right" style="color:var(--green);font-weight:600">${fmtP(r30.liquido/BASE)}</td>
         <td class="td-right" style="font-weight:600">${fmtR(r60.liquido)}</td>

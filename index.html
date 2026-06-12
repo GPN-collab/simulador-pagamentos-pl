@@ -283,7 +283,7 @@
         </div>
       </div>
 
-      <div class="field-group">
+      <div class="field-group" id="entradaGroup">
         <span class="field-label">Data da Entrada *</span>
         <div class="date-wrapper">
           <!-- Campo de texto visível com máscara dd/mm/aaaa -->
@@ -765,13 +765,13 @@
     return { dE: parseBR(de), dP: parseBR(dp) };
   }
 
-  // Valida as datas: entrada obrigatória, parcela obrigatória e deve ser após a entrada
-  function validateDates(dE, dP, valor) {
+  // Valida as datas: entrada obrigatória (só com entrada), parcela sempre obrigatória
+  function validateDates(dE, dP, valor, semEntrada) {
     let valid = true;
 
     const entradaErr = document.getElementById('entradaError');
     const entradaInp = document.getElementById('dataEntrada');
-    if (!dE) {
+    if (!semEntrada && !dE) {
       entradaErr.classList.add('visible'); entradaInp.classList.add('error'); valid = false;
     } else {
       entradaErr.classList.remove('visible'); entradaInp.classList.remove('error');
@@ -783,7 +783,7 @@
     if (!dP) {
       parcelaErr.classList.add('visible'); parcelaInp.classList.add('error');
       orderErr.classList.remove('visible'); valid = false;
-    } else if (dE && dP <= dE) {
+    } else if (!semEntrada && dE && dP <= dE) {
       orderErr.classList.add('visible'); parcelaInp.classList.add('error');
       parcelaErr.classList.remove('visible'); valid = false;
     } else {
@@ -812,7 +812,7 @@
       el.innerHTML=`<div class="placeholder"><span class="pl-icon">✦</span><p>Digite o valor do orçamento para simular<br>as condições de pagamento.</p></div>`;
       return;
     }
-    if(!validateDates(dE,dP,valor)) return;
+    if(!validateDates(dE,dP,valor,semEntrada)) return;
     cardCtr=0;
 
     // Boleto: aparece apenas no modo "com entrada" (à vista, 2×, 3×, 4×, 5×)
@@ -857,7 +857,12 @@
   });
 
   // Recalcula ao mudar o modo (com entrada / sem entrada)
-  document.querySelectorAll('input[name="modo"]').forEach(r => r.addEventListener('change', atualizar));
+  function syncEntradaVisibility() {
+    const semEntrada = document.querySelector('input[name="modo"]:checked').value !== 'com';
+    document.getElementById('entradaGroup').style.display = semEntrada ? 'none' : '';
+  }
+  document.querySelectorAll('input[name="modo"]').forEach(r => r.addEventListener('change', () => { syncEntradaVisibility(); atualizar(); }));
+  syncEntradaVisibility();
 </script>
 </body>
 </html>
