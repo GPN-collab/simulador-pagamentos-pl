@@ -539,12 +539,13 @@
     const O1 = valor * (1 - fator);
 
     if (modo === 'com') {
-      // Com entrada: cliente paga 1/n na entrada, restante (n−1 parcelas) via Santander
-      const entrada    = O1 / n;
+      // Com entrada: todas as n parcelas (entrada + n−1 mensais) são iguais a pm.
+      // O total financiado = pm × n; a retenção incide sobre as n−1 parcelas via Santander.
       const pm         = (O1 - O1/n) * sant30[n-2]; // índice n−2 porque são n−1 parcelas
-      const financiado = pm * (n - 1);
-      const retencao   = financiado * RETENCAO_30[n-2];
-      return { entrada, pm, financiado, retencao, liquido: entrada + (financiado - retencao), prazo: 30 };
+      const financiado = pm * n;
+      const residual   = pm * (n - 1);
+      const retencao   = residual * RETENCAO_30[n-2];
+      return { entrada: pm, pm, financiado, retencao, liquido: financiado - retencao, prazo: 30 };
     } else {
       // Sem entrada: todas as n parcelas passam pelo Santander
       const is60 = modo === 'sem60';

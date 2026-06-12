@@ -462,9 +462,9 @@
       const pm=O1*F[n]; total=pm*n;
       for(let i=1;i<=n;i++) result.push({label:`Parcela ${i}`,valor:pm});
     } else {
-      const entrada=O1/n, pm=(O1-O1/n)*F[n-1];
-      total=entrada+pm*(n-1);
-      result.push({label:'Entrada',valor:entrada});
+      const pm=(O1-O1/n)*F[n-1];
+      total=pm*n;
+      result.push({label:'Entrada',valor:pm});
       for(let i=2;i<=n;i++) result.push({label:`Parcela ${i}`,valor:pm});
     }
     return {parcelas:result,total};
