@@ -522,6 +522,9 @@
             </div>
           </div>
         </div>
+        <div style="margin-top:1.25rem; padding-top:1rem; border-top:1px solid var(--border); display:flex; justify-content:flex-end;">
+          <button class="btn-reset" onclick="restaurarPadroesOpcoes()">↩ Restaurar padrões</button>
+        </div>
       </div>
     </div>
 
@@ -716,6 +719,16 @@
   }
 
   // ── Opções de pagamento ──────────────────────────────────────────────────────
+  function restaurarPadroesOpcoes() {
+    if (!confirm('Restaurar os padrões de habilitação? Os toggles voltarão aos valores originais (alterações não salvas serão perdidas).')) return;
+    const dh = DEFAULTS.habilitados;
+    buildToggles('opt-boleto',   Array.from({length:12},(_,i)=>`${i+1}× Boleto`),                  dh.boleto);
+    buildToggles('opt-sant-com', Array.from({length:18},(_,i)=>`${i+1}× Santander`),               dh.santanderCom);
+    buildToggles('opt-sant30',   Array.from({length:18},(_,i)=>`${i+1}× Santander 30d`),           dh.santander30);
+    buildToggles('opt-sant60',   Array.from({length:18},(_,i)=>`${i+1}× Santander 60d`),           dh.santander60);
+    buildToggles('opt-cartao',   CARTAO_LABELS,                                                     dh.cartao);
+  }
+
   function buildToggles(containerId, labels, values) {
     const el = document.getElementById(containerId);
     if (!el) return;
