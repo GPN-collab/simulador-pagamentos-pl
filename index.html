@@ -819,8 +819,8 @@
     const bLabels={1:'À vista',2:'2× Boleto',3:'3× Boleto',4:'4× Boleto',5:'5× Boleto'};
     let bC=''; if(!semEntrada) for(let n=1;n<=5;n++) bC+=renderBoleto(valor,n,semEntrada,bLabels[n],dE,dP);
 
-    // Santander: 6× a 12× parcelas
-    let sC=''; for(let n=6;n<=12;n++) sC+=renderSantander(valor,n,semEntrada,dE,dP,fatores);
+    // Santander: sem entrada começa em 3×; com entrada começa em 6×
+    let sC=''; for(let n=semEntrada?3:6;n<=12;n++) sC+=renderSantander(valor,n,semEntrada,dE,dP,fatores);
 
     // Cartão: débito, crédito à vista, 2× a 5×
     const ops=[
