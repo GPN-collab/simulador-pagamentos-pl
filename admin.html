@@ -969,25 +969,25 @@
     for (let i = 0; i < 18; i++) {
       const inp = document.getElementById(`sant-${i}`);
       const v = inp?.value.trim() !== '' ? parseFloat(inp.value) : NaN;
-      cfg.santander.push(isNaN(v) ? (cur.santander ?? DEFAULTS.santander)[i] : v);
+      cfg.santander.push(isNaN(v) ? (cur.santander?.[i] ?? DEFAULTS.santander[i]) : v);
     }
     // Santander 60d
     for (let i = 0; i < 18; i++) {
       const inp = document.getElementById(`sant60-${i}`);
       const v = inp?.value.trim() !== '' ? parseFloat(inp.value) : NaN;
-      cfg.santander60.push(isNaN(v) ? (cur.santander60 ?? DEFAULTS.santander60)[i] : v);
+      cfg.santander60.push(isNaN(v) ? (cur.santander60?.[i] ?? DEFAULTS.santander60[i]) : v);
     }
     // Boleto: usuário digita percentual (ex: 20), salvo como decimal (0.20)
     for (let i = 0; i < 12; i++) {
       const inp = document.getElementById(`boleto-${i}`);
       const v = inp?.value.trim() !== '' ? parseFloat(inp.value) : NaN;
-      cfg.boleto.push(isNaN(v) ? (cur.boleto ?? DEFAULTS.boleto)[i] : v / 100);
+      cfg.boleto.push(isNaN(v) ? (cur.boleto?.[i] ?? DEFAULTS.boleto[i]) : v / 100);
     }
     // Cartão: mesma lógica do boleto
     for (let i = 0; i < 13; i++) {
       const inp = document.getElementById(`cartao-${i}`);
       const v = inp?.value.trim() !== '' ? parseFloat(inp.value) : NaN;
-      cfg.cartao.push(isNaN(v) ? (cur.cartao ?? DEFAULTS.cartao)[i] : v / 100);
+      cfg.cartao.push(isNaN(v) ? (cur.cartao?.[i] ?? DEFAULTS.cartao[i]) : v / 100);
     }
 
     cfg.habilitados = {
@@ -1013,7 +1013,7 @@
     try {
       await CONFIG_DOC.set(cfg);
     } catch(e) {
-      showToast('Erro ao salvar na nuvem. Verifique a conexão.', true);
+      showToast('Erro: ' + (e?.code || e?.message || String(e)), true);
       return;
     }
     buildLiquidoTable(cfg);
