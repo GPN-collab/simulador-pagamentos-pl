@@ -351,19 +351,34 @@
   // seria necessário um servidor backend (integração futura com o ERP).
   const STORAGE_KEY = 'pl_config';
   const DEFAULTS = {
-    fatorCorrecao: 0.1665,        // 16,65% — desconto aplicado antes do cálculo das parcelas
-    santander: [                  // Fatores multiplicadores 30 dias (índice 0 = 1×, 11 = 12×)
+    fatorCorrecao: 0.1665,
+    santander: [                  // 30 dias — índice 0 = 1×, 17 = 18×
       1.0253, 0.5190540118, 0.350340458, 0.2660100047, 0.2154327824,
       0.1817321657, 0.1567768837, 0.1387546517, 0.1247476901,
-      0.1135514091, 0.1043992506, 0.09678017505
+      0.1135514091, 0.1043992506, 0.09678017505,
+      // 13×–18×: placeholders — preencher com valores reais do Santander antes de habilitar
+      0.0900, 0.0840, 0.0787, 0.0741, 0.0700, 0.0663
     ],
-    santander60: [                // Fatores multiplicadores 60 dias (índice 0 = 1×, 11 = 12×)
+    santander60: [                // 60 dias — índice 0 = 1×, 17 = 18×
       1.05124, 0.53219, 0.3592, 0.27274, 0.22088,
       0.18633, 0.16051, 0.14206, 0.12772,
-      0.11625, 0.10688, 0.09908
+      0.11625, 0.10688, 0.09908,
+      // 13×–18×: placeholders
+      0.0921, 0.0859, 0.0805, 0.0757, 0.0714, 0.0676
     ],
-    boleto: [0.20, 0.16, 0.15, 0.14, 0.13],      // Descontos boleto: à vista, 2×, 3×, 4×, 5×
-    cartao: [0.16, 0.14, 0.13, 0.12, 0.11, 0.10] // Descontos cartão: débito, crédito à vista, 2×, 3×, 4×, 5×
+    boleto: [                     // à vista, 2×–12× — 6×–12× placeholders (desabilitados)
+      0.20, 0.16, 0.15, 0.14, 0.13, 0.12, 0.11, 0.10, 0.09, 0.08, 0.07, 0.06
+    ],
+    cartao: [                     // débito, crédito à vista, 2×–12× — 6×–12× placeholders
+      0.16, 0.14, 0.13, 0.12, 0.11, 0.10, 0.09, 0.08, 0.07, 0.06, 0.05, 0.04, 0.03
+    ],
+    habilitados: {
+      boleto:       [true,true,true,true,true, false,false,false,false,false,false,false],
+      santanderCom: [false,false,false,false,false, true,true,true,true,true,true,true, false,false,false,false,false,false],
+      santander30:  [false,false, true,true,true,true,true,true,true,true,true,true, false,false,false,false,false,false],
+      santander60:  [false,false, true,true,true,true,true,true,true,true,true,true, false,false,false,false,false,false],
+      cartao:       [true,true,true,true,true,true, false,false,false,false,false,false,false],
+    }
   };
 
   // Lê o config do localStorage e devolve. Usa DEFAULTS se não houver nada salvo.
@@ -399,14 +414,23 @@
   function reloadCfg() {
     const cfg = getCfg();
     FATOR_CORRECAO = cfg.fatorCorrecao ?? DEFAULTS.fatorCorrecao;
-    // FSant e FSant60 são objetos indexados por número de parcelas (chave = 1 a 12)
-    FSant = {};
-    (cfg.santander ?? DEFAULTS.santander).forEach((v, i) => FSant[i+1] = v);
-    FSant60 = {};
-    (cfg.santander60 ?? DEFAULTS.santander60).forEach((v, i) => FSant60[i+1] = v);
-    window._cfgBoleto = cfg.boleto ?? DEFAULTS.boleto;
-    window._cfgCartao = cfg.cartao ?? DEFAULTS.cartao;
-    window._cfgHab    = cfg.habilitados || {};
+    // Padding garante tamanho completo mesmo quando o config salvo é de versão anterior
+    const sant   = Array.from({length:18}, (_,i) => cfg.santander?.[i]  ?? DEFAULTS.santander[i]);
+    const sant60 = Array.from({length:18}, (_,i) => cfg.santander60?.[i] ?? DEFAULTS.santander60[i]);
+    FSant = {};   sant.forEach((v,i)   => FSant[i+1]   = v);
+    FSant60 = {}; sant60.forEach((v,i) => FSant60[i+1] = v);
+    window._cfgBoleto = Array.from({length:12}, (_,i) => cfg.boleto?.[i]  ?? DEFAULTS.boleto[i]);
+    window._cfgCartao = Array.from({length:13}, (_,i) => cfg.cartao?.[i]  ?? DEFAULTS.cartao[i]);
+    // Para habilitados: índices ausentes no config salvo assumem o default (novo = desabilitado)
+    const defHab = DEFAULTS.habilitados;
+    const cfgHab = cfg.habilitados || {};
+    window._cfgHab = {
+      boleto:       Array.from({length:12}, (_,i) => cfgHab.boleto?.[i]       ?? defHab.boleto[i]),
+      santanderCom: Array.from({length:18}, (_,i) => cfgHab.santanderCom?.[i] ?? defHab.santanderCom[i]),
+      santander30:  Array.from({length:18}, (_,i) => cfgHab.santander30?.[i]  ?? defHab.santander30[i]),
+      santander60:  Array.from({length:18}, (_,i) => cfgHab.santander60?.[i]  ?? defHab.santander60[i]),
+      cartao:       Array.from({length:13}, (_,i) => cfgHab.cartao?.[i]       ?? defHab.cartao[i]),
+    };
   }
   reloadCfg();
 
@@ -439,7 +463,7 @@
   // Boleto / Cheque / Dinheiro:
   // Aplica o percentual de desconto sobre o valor total e divide em n parcelas iguais.
   function parcelas_boleto(valor, n, semEntrada) {
-    const descs = { 1: _cfgBoleto[0], 2: _cfgBoleto[1], 3: _cfgBoleto[2], 4: _cfgBoleto[3], 5: _cfgBoleto[4] };
+    const descs = {}; _cfgBoleto.forEach((v,i) => descs[i+1]=v);
     const total=valor*(1-descs[n]), p=total/n, result=[];
     if(n===1) result.push({label:'Pagamento único',valor:total});
     else if(semEntrada) for(let i=1;i<=n;i++) result.push({label:`Parcela ${i}`,valor:p});
@@ -536,7 +560,7 @@
 
   // Renderiza um card de boleto/cheque/dinheiro
   function renderBoleto(valor,n,semEntrada,label,dE,dP) {
-    const descs = { 1: _cfgBoleto[0], 2: _cfgBoleto[1], 3: _cfgBoleto[2], 4: _cfgBoleto[3], 5: _cfgBoleto[4] };
+    const descs = {}; _cfgBoleto.forEach((v,i) => descs[i+1]=v);
     const data=parcelas_boleto(valor,n,semEntrada); const p=data.total/n;
     const lines=n===1?['Pagamento único']:semEntrada?[`<strong>${n}× de ${fmt(p)}</strong>`]:
       [`Entrada <strong>${fmt(p)}</strong>`,`${n-1}× de <strong>${fmt(p)}</strong>`];
@@ -754,6 +778,10 @@
     const proxMes = new Date(hoje);
     proxMes.setMonth(proxMes.getMonth() + 1);
 
+    const maxEntrada = new Date(hoje); maxEntrada.setDate(maxEntrada.getDate() + 6);
+    document.getElementById('dataEntradaNative').min = fmtISO(hoje);
+    document.getElementById('dataEntradaNative').max = fmtISO(maxEntrada);
+
     document.getElementById('dataEntrada').value = fmtBR(hoje);
     document.getElementById('dataEntradaNative').value = fmtISO(hoje);
     document.getElementById('dataParcela').value = fmtBR(proxMes);
@@ -772,8 +800,21 @@
 
     const entradaErr = document.getElementById('entradaError');
     const entradaInp = document.getElementById('dataEntrada');
-    if (!semEntrada && !dE) {
-      entradaErr.classList.add('visible'); entradaInp.classList.add('error'); valid = false;
+    if (!semEntrada) {
+      if (!dE) {
+        entradaErr.textContent = 'Campo obrigatório';
+        entradaErr.classList.add('visible'); entradaInp.classList.add('error'); valid = false;
+      } else {
+        const _hoje = new Date(); _hoje.setHours(0,0,0,0);
+        const _max  = new Date(_hoje); _max.setDate(_max.getDate() + 6);
+        const _dE   = new Date(dE);   _dE.setHours(0,0,0,0);
+        if (_dE > _max) {
+          entradaErr.textContent = 'Data máxima: hoje + 6 dias';
+          entradaErr.classList.add('visible'); entradaInp.classList.add('error'); valid = false;
+        } else {
+          entradaErr.classList.remove('visible'); entradaInp.classList.remove('error');
+        }
+      }
     } else {
       entradaErr.classList.remove('visible'); entradaInp.classList.remove('error');
     }
@@ -818,29 +859,36 @@
 
     const hab = window._cfgHab || {};
 
-    // Boleto: aparece apenas no modo "com entrada" (à vista, 2×, 3×, 4×, 5×)
-    const bLabels={1:'À vista',2:'2× Boleto',3:'3× Boleto',4:'4× Boleto',5:'5× Boleto'};
+    // Boleto: aparece apenas no modo "com entrada" (à vista, 2×–12×)
+    const bLabels={1:'À vista',2:'2× Boleto',3:'3× Boleto',4:'4× Boleto',5:'5× Boleto',
+      6:'6× Boleto',7:'7× Boleto',8:'8× Boleto',9:'9× Boleto',10:'10× Boleto',11:'11× Boleto',12:'12× Boleto'};
     let bC='';
-    if(!semEntrada) for(let n=1;n<=5;n++) {
+    if(!semEntrada) for(let n=1;n<=12;n++) {
       if(hab.boleto?.[n-1]!==false) bC+=renderBoleto(valor,n,semEntrada,bLabels[n],dE,dP);
     }
 
-    // Santander: sem entrada começa em 3×; com entrada começa em 6×
+    // Santander: 1× a 18×, filtrado por habilitados
     let sC='';
-    for(let n=semEntrada?3:6;n<=12;n++) {
+    for(let n=1;n<=18;n++) {
       const habKey = !semEntrada ? 'santanderCom' : (modo==='sem60' ? 'santander60' : 'santander30');
-      const habIdx = !semEntrada ? n-6 : n-3;
-      if(hab[habKey]?.[habIdx]!==false) sC+=renderSantander(valor,n,semEntrada,dE,dP,fatores);
+      if(hab[habKey]?.[n-1]!==false) sC+=renderSantander(valor,n,semEntrada,dE,dP,fatores);
     }
 
-    // Cartão: débito, crédito à vista, 2× a 5×
+    // Cartão: débito, crédito à vista, 2×–12×
     const ops=[
-      {label:'Débito',         desc:_cfgCartao[0], n:1, hi:0},
-      {label:'Crédito à vista',desc:_cfgCartao[1], n:1, hi:1},
-      {label:'2× Crédito',    desc:_cfgCartao[2], n:2, hi:2},
-      {label:'3× Crédito',    desc:_cfgCartao[3], n:3, hi:3},
-      {label:'4× Crédito',    desc:_cfgCartao[4], n:4, hi:4},
-      {label:'5× Crédito',    desc:_cfgCartao[5], n:5, hi:5}
+      {label:'Débito',          desc:_cfgCartao[0],  n:1,  hi:0},
+      {label:'Crédito à vista', desc:_cfgCartao[1],  n:1,  hi:1},
+      {label:'2× Crédito',      desc:_cfgCartao[2],  n:2,  hi:2},
+      {label:'3× Crédito',      desc:_cfgCartao[3],  n:3,  hi:3},
+      {label:'4× Crédito',      desc:_cfgCartao[4],  n:4,  hi:4},
+      {label:'5× Crédito',      desc:_cfgCartao[5],  n:5,  hi:5},
+      {label:'6× Crédito',      desc:_cfgCartao[6],  n:6,  hi:6},
+      {label:'7× Crédito',      desc:_cfgCartao[7],  n:7,  hi:7},
+      {label:'8× Crédito',      desc:_cfgCartao[8],  n:8,  hi:8},
+      {label:'9× Crédito',      desc:_cfgCartao[9],  n:9,  hi:9},
+      {label:'10× Crédito',     desc:_cfgCartao[10], n:10, hi:10},
+      {label:'11× Crédito',     desc:_cfgCartao[11], n:11, hi:11},
+      {label:'12× Crédito',     desc:_cfgCartao[12], n:12, hi:12}
     ];
     let cC=''; for(const o of ops) {
       if(hab.cartao?.[o.hi]!==false) cC+=renderCartao(valor,o.label,o.desc,o.n,dE,dP);

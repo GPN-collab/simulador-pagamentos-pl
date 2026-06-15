@@ -266,13 +266,24 @@
           <div class="sim-field">
             <label>Nº de Parcelas</label>
             <select id="sim-parcelas">
+              <option value="1">1×</option>
+              <option value="2">2×</option>
+              <option value="3">3×</option>
+              <option value="4">4×</option>
+              <option value="5">5×</option>
               <option value="6">6×</option>
               <option value="7">7×</option>
               <option value="8">8×</option>
               <option value="9">9×</option>
               <option value="10">10×</option>
               <option value="11">11×</option>
-              <option value="12">12×</option>
+              <option value="12" selected>12×</option>
+              <option value="13">13×</option>
+              <option value="14">14×</option>
+              <option value="15">15×</option>
+              <option value="16">16×</option>
+              <option value="17">17×</option>
+              <option value="18">18×</option>
             </select>
           </div>
           <div class="sim-field">
@@ -341,7 +352,7 @@
         <table class="edit-table table-desc">
           <colgroup><col style="width:40%"><col style="width:20%"><col style="width:20%"><col style="width:20%"></colgroup>
           <thead>
-            <tr><th>Parcelas</th><th class="right" style="color:var(--stone-lt)">Anterior</th><th class="right">Atual</th><th class="right">Novo valor</th></tr>
+            <tr><th>Parcelas</th><th style="color:var(--stone-lt)">Anterior</th><th class="right">Atual</th><th class="right">Novo valor</th></tr>
           </thead>
           <tbody id="boleto-body"></tbody>
         </table>
@@ -361,7 +372,7 @@
         <table class="edit-table table-desc">
           <colgroup><col style="width:40%"><col style="width:20%"><col style="width:20%"><col style="width:20%"></colgroup>
           <thead>
-            <tr><th>Modalidade</th><th class="right" style="color:var(--stone-lt)">Anterior</th><th class="right">Atual</th><th class="right">Novo valor</th></tr>
+            <tr><th>Modalidade</th><th style="color:var(--stone-lt)">Anterior</th><th class="right">Atual</th><th class="right">Novo valor</th></tr>
           </thead>
           <tbody id="cartao-body"></tbody>
         </table>
@@ -386,7 +397,7 @@
           <thead>
             <tr>
               <th></th>
-              <th class="right" style="color:var(--stone-lt)">Anterior</th>
+              <th style="color:var(--stone-lt)">Anterior</th>
               <th class="right">Atual</th>
               <th class="right">Novo valor</th>
             </tr>
@@ -394,7 +405,7 @@
           <tbody>
             <tr>
               <td class="row-label">Fator de correção</td>
-              <td class="td-right" style="color:var(--stone-lt);font-size:.75rem" id="fc-anterior">—</td>
+              <td class="td-right" style="color:var(--stone-lt);font-size:.75rem;text-align:left" id="fc-anterior">—</td>
               <td class="td-right" style="font-size:.82rem" id="fc-atual">—</td>
               <td class="td-right">
                 <input type="number" class="num-input" id="fc-fator" step="0.0001" min="0" max="1">
@@ -431,12 +442,14 @@
       </div>
       <div class="section-card-body">
         <table class="edit-table table-mult">
-          <colgroup><col style="width:40%"><col style="width:20%"><col style="width:20%"><col style="width:20%"></colgroup>
+          <colgroup><col style="width:18%"><col style="width:16%"><col style="width:14%"><col style="width:16%"><col style="width:16%"><col style="width:20%"></colgroup>
           <thead>
             <tr>
               <th>Nº de Parcelas</th>
-              <th class="right" style="color:var(--stone-lt)">Anterior</th>
+              <th style="color:var(--stone-lt)">Anterior</th>
               <th class="right">Atual</th>
+              <th class="right">Desc. com entrada</th>
+              <th class="right">Desc. sem entrada</th>
               <th class="right">Novo valor</th>
             </tr>
           </thead>
@@ -457,12 +470,14 @@
       </div>
       <div class="section-card-body">
         <table class="edit-table table-mult">
-          <colgroup><col style="width:40%"><col style="width:20%"><col style="width:20%"><col style="width:20%"></colgroup>
+          <colgroup><col style="width:18%"><col style="width:16%"><col style="width:14%"><col style="width:16%"><col style="width:16%"><col style="width:20%"></colgroup>
           <thead>
             <tr>
               <th>Nº de Parcelas</th>
-              <th class="right" style="color:var(--stone-lt)">Anterior</th>
+              <th style="color:var(--stone-lt)">Anterior</th>
               <th class="right">Atual</th>
+              <th class="right">Desc. com entrada</th>
+              <th class="right">Desc. sem entrada</th>
               <th class="right">Novo valor</th>
             </tr>
           </thead>
@@ -547,22 +562,33 @@
   // São usados quando não há nada salvo no localStorage (primeira vez que abre).
   // Ao salvar pelo portal, os valores do localStorage passam a ter precedência.
   const DEFAULTS = {
-    fatorCorrecao: 0.1665,         // 16,65% — aplicado antes do cálculo das parcelas
-    santander: [                   // Fatores multiplicadores 30 dias (índice 0 = 1×, 11 = 12×)
+    fatorCorrecao: 0.1665,
+    santander: [                   // 30 dias — índice 0 = 1×, 17 = 18×
       1.0253, 0.5190540118, 0.350340458, 0.2660100047, 0.2154327824,
       0.1817321657, 0.1567768837, 0.1387546517, 0.1247476901,
-      0.1135514091, 0.1043992506, 0.09678017505
+      0.1135514091, 0.1043992506, 0.09678017505,
+      // 13×–18×: placeholders — preencher com valores reais do Santander antes de habilitar
+      0.0900, 0.0840, 0.0787, 0.0741, 0.0700, 0.0663
     ],
-    santander60: [                 // Fatores multiplicadores 60 dias (índice 0 = 1×, 11 = 12×)
+    santander60: [                 // 60 dias — índice 0 = 1×, 17 = 18×
       1.05124, 0.53219, 0.3592, 0.27274, 0.22088,
       0.18633, 0.16051, 0.14206, 0.12772,
-      0.11625, 0.10688, 0.09908
+      0.11625, 0.10688, 0.09908,
+      // 13×–18×: placeholders
+      0.0921, 0.0859, 0.0805, 0.0757, 0.0714, 0.0676
     ],
-    boleto: [0.20, 0.16, 0.15, 0.14, 0.13],   // Descontos boleto: à vista, 2×, 3×, 4×, 5×
-    cartao: [0.16, 0.14, 0.13, 0.12, 0.11, 0.10] // Descontos cartão: débito, crédito à vista, 2×, 3×, 4×, 5×
+    boleto: [0.20, 0.16, 0.15, 0.14, 0.13, 0.12, 0.11, 0.10, 0.09, 0.08, 0.07, 0.06],
+    cartao: [0.16, 0.14, 0.13, 0.12, 0.11, 0.10, 0.09, 0.08, 0.07, 0.06, 0.05, 0.04, 0.03],
+    habilitados: {
+      boleto:       [true,true,true,true,true, false,false,false,false,false,false,false],
+      santanderCom: [false,false,false,false,false, true,true,true,true,true,true,true, false,false,false,false,false,false],
+      santander30:  [false,false, true,true,true,true,true,true,true,true,true,true, false,false,false,false,false,false],
+      santander60:  [false,false, true,true,true,true,true,true,true,true,true,true, false,false,false,false,false,false],
+      cartao:       [true,true,true,true,true,true, false,false,false,false,false,false,false],
+    }
   };
 
-  const CARTAO_LABELS = ['Débito', 'Crédito à vista', '2× Crédito', '3× Crédito', '4× Crédito', '5× Crédito'];
+  const CARTAO_LABELS = ['Débito','Crédito à vista','2× Crédito','3× Crédito','4× Crédito','5× Crédito','6× Crédito','7× Crédito','8× Crédito','9× Crédito','10× Crédito','11× Crédito','12× Crédito'];
 
   // ── Taxas de retenção Santander ──────────────────────────────────────────────
   // O Santander retém um percentual do total financiado como garantia.
@@ -573,8 +599,10 @@
   //     (a entrada vai direto para a loja; apenas n−1 parcelas passam pelo Santander)
   //   - Sem entrada, n parcelas total → usa índice n−1
   //     (todas as n parcelas passam pelo Santander)
-  const RETENCAO_30 = [0.025,0.0367,0.0485,0.0602,0.0716,0.0829,0.0888,0.0991,0.1093,0.1193,0.1292,0.1389];
-  const RETENCAO_60 = [0.0487,0.0605,0.0720,0.0834,0.0945,0.1055,0.1100,0.1201,0.1300,0.1398,0.1495,0.1590];
+  const RETENCAO_30 = [0.025,0.0367,0.0485,0.0602,0.0716,0.0829,0.0888,0.0991,0.1093,0.1193,0.1292,0.1389,
+    0.1485,0.1580,0.1673,0.1765,0.1855,0.1944]; // 13×–18×: placeholders
+  const RETENCAO_60 = [0.0487,0.0605,0.0720,0.0834,0.0945,0.1055,0.1100,0.1201,0.1300,0.1398,0.1495,0.1590,
+    0.1684,0.1777,0.1869,0.1960,0.2050,0.2139]; // 13×–18×: placeholders
 
   // ── Cálculo Santander ────────────────────────────────────────────────────────
   // Calcula entrada, parcela mensal, total financiado, retenção e líquido
@@ -660,6 +688,31 @@
     document.getElementById('sim-kpi-pct').textContent        = fmtP(r.liquido / valor);
 
     document.getElementById('sim-result').classList.add('show');
+  }
+
+  // ── Desconto efetivo Santander ───────────────────────────────────────────────
+  // Sem entrada n parcelas: usa sant[n-1] →  pct = (1 − (1−fc) × sant[n-1] × n) × 100
+  // Com entrada n parcelas: usa sant[n-2] →  pct = (1 − (1−fc) × (n-1) × sant[n-2]) × 100
+  function _fc() { return getConfig().fatorCorrecao ?? DEFAULTS.fatorCorrecao; }
+
+  function descSem(factor, n) {
+    const pct = (1 - (1 - _fc()) * factor * n) * 100;
+    return '↓ ' + pct.toFixed(2).replace('.', ',') + '%';
+  }
+
+  function descCom(i, arr) {
+    if (i === 0) return '—';
+    const pct = (1 - (1 - _fc()) * i * arr[i - 1]) * 100;
+    return '↓ ' + pct.toFixed(2).replace('.', ',') + '%';
+  }
+
+  function updateDescSpan(inputId, n) {
+    const inp  = document.getElementById(inputId);
+    const span = document.getElementById(inputId + '-desc-sem');
+    if (!inp || !span) return;
+    const v = inp.value.trim() !== '' ? parseFloat(inp.value) : parseFloat(inp.dataset.cur);
+    if (isNaN(v) || v <= 0) { span.textContent = '—'; return; }
+    span.textContent = descSem(v, n);
   }
 
   // ── Opções de pagamento ──────────────────────────────────────────────────────
@@ -784,6 +837,12 @@
     const prevBoleto = prev.boleto      || [];
     const prevCartao = prev.cartao      || [];
 
+    // Garante que os arrays têm o tamanho completo, preenchendo slots novos com DEFAULTS
+    const fullSant   = Array.from({length:18}, (_,i) => cfg.santander?.[i]   ?? DEFAULTS.santander[i]);
+    const fullSant60 = Array.from({length:18}, (_,i) => cfg.santander60?.[i]  ?? DEFAULTS.santander60[i]);
+    const fullBoleto = Array.from({length:12}, (_,i) => cfg.boleto?.[i]       ?? DEFAULTS.boleto[i]);
+    const fullCartao = Array.from({length:13}, (_,i) => cfg.cartao?.[i]       ?? DEFAULTS.cartao[i]);
+
     // fmtPrev preserva a precisão total dos fatores (ex: 0.09678017505)
     // sem arredondar nem adicionar zeros desnecessários
     const fmtPrev    = v => v != null ? parseFloat(Number(v).toFixed(13)).toString() : '—';
@@ -792,29 +851,37 @@
     // Santander 30d rows
     const sb = document.getElementById('sant-body');
     sb.innerHTML = '';
-    cfg.santander.forEach((val, i) => {
+    fullSant.forEach((val, i) => {
+      const n = i + 1;
       sb.innerHTML += `
         <tr>
-          <td class="row-label">${i+1}× parcela${i>0?'s':''}</td>
-          <td class="td-right" style="color:var(--stone-lt);font-size:.75rem">${fmtPrev(prevSant[i])}</td>
+          <td class="row-label">${n}× parcela${i>0?'s':''}</td>
+          <td class="td-right" style="color:var(--stone-lt);font-size:.75rem;text-align:left">${fmtPrev(prevSant[i])}</td>
           <td class="td-right" style="font-size:.82rem">${fmtPrev(val)}</td>
+          <td class="td-right" style="font-size:.8rem;font-weight:600;color:var(--green)">${descCom(i, fullSant)}</td>
+          <td class="td-right"><span id="sant-${i}-desc-sem" style="font-size:.8rem;font-weight:600;color:var(--green)">${descSem(val, n)}</span></td>
           <td class="td-right">
-            <input type="number" class="num-input" id="sant-${i}" value="" step="0.000001" min="0" oninput="markChanged(this)">
+            <input type="number" class="num-input" id="sant-${i}" value="" step="0.000001" min="0"
+              data-cur="${val}" oninput="markChanged(this); updateDescSpan('sant-${i}', ${n})">
           </td>
         </tr>`;
     });
 
-    // Santander 60d rows
+    // Santander 60d rows (com entrada não usa fatores 60d → coluna mostra —)
     const sb60 = document.getElementById('sant60-body');
     sb60.innerHTML = '';
-    (cfg.santander60 ?? DEFAULTS.santander60).forEach((val, i) => {
+    fullSant60.forEach((val, i) => {
+      const n = i + 1;
       sb60.innerHTML += `
         <tr>
-          <td class="row-label">${i+1}× parcela${i>0?'s':''}</td>
-          <td class="td-right" style="color:var(--stone-lt);font-size:.75rem">${fmtPrev(prevSant60[i])}</td>
+          <td class="row-label">${n}× parcela${i>0?'s':''}</td>
+          <td class="td-right" style="color:var(--stone-lt);font-size:.75rem;text-align:left">${fmtPrev(prevSant60[i])}</td>
           <td class="td-right" style="font-size:.82rem">${fmtPrev(val)}</td>
+          <td class="td-right" style="font-size:.8rem;color:var(--stone-lt)">—</td>
+          <td class="td-right"><span id="sant60-${i}-desc-sem" style="font-size:.8rem;font-weight:600;color:var(--green)">${descSem(val, n)}</span></td>
           <td class="td-right">
-            <input type="number" class="num-input" id="sant60-${i}" value="" step="0.000001" min="0" oninput="markChanged(this)">
+            <input type="number" class="num-input" id="sant60-${i}" value="" step="0.000001" min="0"
+              data-cur="${val}" oninput="markChanged(this); updateDescSpan('sant60-${i}', ${n})">
           </td>
         </tr>`;
     });
@@ -822,13 +889,13 @@
     // Boleto rows
     const bb = document.getElementById('boleto-body');
     bb.innerHTML = '';
-    const bLabels = ['À vista (1×)', '2× parcelas', '3× parcelas', '4× parcelas', '5× parcelas'];
-    cfg.boleto.forEach((val, i) => {
+    const bLabels = ['À vista (1×)','2× parcelas','3× parcelas','4× parcelas','5× parcelas','6× parcelas','7× parcelas','8× parcelas','9× parcelas','10× parcelas','11× parcelas','12× parcelas'];
+    fullBoleto.forEach((val, i) => {
       const cur = (val*100).toFixed(2); // converte de decimal para percentual para exibição
       bb.innerHTML += `
         <tr>
           <td class="row-label">${bLabels[i]}</td>
-          <td class="td-right" style="color:var(--stone-lt);font-size:.75rem">${fmtPrevPct(prevBoleto[i])}</td>
+          <td class="td-right" style="color:var(--stone-lt);font-size:.75rem;text-align:left">${fmtPrevPct(prevBoleto[i])}</td>
           <td class="td-right" style="font-size:.82rem">${cur}</td>
           <td class="td-right">
             <input type="number" class="num-input" id="boleto-${i}" value="" step="0.01" min="0" max="100" oninput="markChanged(this)">
@@ -839,12 +906,12 @@
     // Cartão rows
     const cb = document.getElementById('cartao-body');
     cb.innerHTML = '';
-    cfg.cartao.forEach((val, i) => {
+    fullCartao.forEach((val, i) => {
       const cur = (val*100).toFixed(2);
       cb.innerHTML += `
         <tr>
           <td class="row-label">${CARTAO_LABELS[i]}</td>
-          <td class="td-right" style="color:var(--stone-lt);font-size:.75rem">${fmtPrevPct(prevCartao[i])}</td>
+          <td class="td-right" style="color:var(--stone-lt);font-size:.75rem;text-align:left">${fmtPrevPct(prevCartao[i])}</td>
           <td class="td-right" style="font-size:.82rem">${cur}</td>
           <td class="td-right">
             <input type="number" class="num-input" id="cartao-${i}" value="" step="0.01" min="0" max="100" oninput="markChanged(this)">
@@ -852,18 +919,22 @@
         </tr>`;
     });
 
-    // Opções de pagamento
-    const hab = cfg.habilitados || {};
-    buildToggles('opt-boleto',   ['À vista (1×)','2× Boleto','3× Boleto','4× Boleto','5× Boleto'],
-      hab.boleto      ?? Array(5).fill(true));
-    buildToggles('opt-sant-com', Array.from({length:7},(_,i)=>`${i+6}× Santander`),
-      hab.santanderCom ?? Array(7).fill(true));
-    buildToggles('opt-sant30',   Array.from({length:10},(_,i)=>`${i+3}× Santander 30d`),
-      hab.santander30  ?? Array(10).fill(true));
-    buildToggles('opt-sant60',   Array.from({length:10},(_,i)=>`${i+3}× Santander 60d`),
-      hab.santander60  ?? Array(10).fill(true));
-    buildToggles('opt-cartao',   ['Débito','Crédito à vista','2× Crédito','3× Crédito','4× Crédito','5× Crédito'],
-      hab.cartao       ?? Array(6).fill(true));
+    // Opções de pagamento — padding garante que índices novos assumem o default (desabilitado)
+    const cfgHab = cfg.habilitados || {};
+    const defHab = DEFAULTS.habilitados;
+    const habPad = (key, len) => Array.from({length:len}, (_,i) => cfgHab[key]?.[i] ?? defHab[key][i]);
+    buildToggles('opt-boleto',
+      ['À vista (1×)','2× Boleto','3× Boleto','4× Boleto','5× Boleto','6× Boleto','7× Boleto','8× Boleto','9× Boleto','10× Boleto','11× Boleto','12× Boleto'],
+      habPad('boleto', 12));
+    buildToggles('opt-sant-com', Array.from({length:18},(_,i)=>`${i+1}× Santander`),
+      habPad('santanderCom', 18));
+    buildToggles('opt-sant30',   Array.from({length:18},(_,i)=>`${i+1}× Santander 30d`),
+      habPad('santander30', 18));
+    buildToggles('opt-sant60',   Array.from({length:18},(_,i)=>`${i+1}× Santander 60d`),
+      habPad('santander60', 18));
+    buildToggles('opt-cartao',
+      ['Débito','Crédito à vista','2× Crédito','3× Crédito','4× Crédito','5× Crédito','6× Crédito','7× Crédito','8× Crédito','9× Crédito','10× Crédito','11× Crédito','12× Crédito'],
+      habPad('cartao', 13));
 
     document.getElementById('save-status').textContent = '';
     buildLiquidoTable(cfg);
@@ -895,36 +966,36 @@
     };
 
     // Santander 30d: lê cada campo; mantém valor atual se campo estiver em branco
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < 18; i++) {
       const inp = document.getElementById(`sant-${i}`);
       const v = inp?.value.trim() !== '' ? parseFloat(inp.value) : NaN;
-      cfg.santander.push(isNaN(v) ? cur.santander[i] : v);
+      cfg.santander.push(isNaN(v) ? (cur.santander ?? DEFAULTS.santander)[i] : v);
     }
     // Santander 60d
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < 18; i++) {
       const inp = document.getElementById(`sant60-${i}`);
       const v = inp?.value.trim() !== '' ? parseFloat(inp.value) : NaN;
       cfg.santander60.push(isNaN(v) ? (cur.santander60 ?? DEFAULTS.santander60)[i] : v);
     }
     // Boleto: usuário digita percentual (ex: 20), salvo como decimal (0.20)
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 12; i++) {
       const inp = document.getElementById(`boleto-${i}`);
       const v = inp?.value.trim() !== '' ? parseFloat(inp.value) : NaN;
-      cfg.boleto.push(isNaN(v) ? cur.boleto[i] : v / 100);
+      cfg.boleto.push(isNaN(v) ? (cur.boleto ?? DEFAULTS.boleto)[i] : v / 100);
     }
     // Cartão: mesma lógica do boleto
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 13; i++) {
       const inp = document.getElementById(`cartao-${i}`);
       const v = inp?.value.trim() !== '' ? parseFloat(inp.value) : NaN;
-      cfg.cartao.push(isNaN(v) ? cur.cartao[i] : v / 100);
+      cfg.cartao.push(isNaN(v) ? (cur.cartao ?? DEFAULTS.cartao)[i] : v / 100);
     }
 
     cfg.habilitados = {
-      boleto:       readToggles('opt-boleto',   5),
-      santanderCom: readToggles('opt-sant-com', 7),
-      santander30:  readToggles('opt-sant30',  10),
-      santander60:  readToggles('opt-sant60',  10),
-      cartao:       readToggles('opt-cartao',   6),
+      boleto:       readToggles('opt-boleto',   12),
+      santanderCom: readToggles('opt-sant-com', 18),
+      santander30:  readToggles('opt-sant30',   18),
+      santander60:  readToggles('opt-sant60',   18),
+      cartao:       readToggles('opt-cartao',   13),
     };
 
     const now = new Date();
