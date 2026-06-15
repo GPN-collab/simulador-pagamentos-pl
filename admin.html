@@ -160,6 +160,20 @@
     .btn-save:hover { background: var(--copper-dk); }
     .save-status { font-size: .75rem; color: var(--stone-lt); margin-right: auto; }
 
+    /* ── Opções de pagamento ── */
+    .opt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 2.5rem; }
+    .opt-group { margin-bottom: 1.25rem; }
+    .opt-group-title { font-size: .63rem; font-weight: 600; text-transform: uppercase; letter-spacing: .1em; color: var(--stone-lt); padding-bottom: .35rem; margin-bottom: .1rem; border-bottom: 1px solid var(--border); }
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: .38rem 0; border-bottom: 1px solid var(--cream-dk); }
+    .toggle-row:last-child { border-bottom: none; }
+    .toggle-label { font-size: .8rem; color: var(--ink-mid); }
+    .toggle-switch { position: relative; display: inline-block; width: 36px; height: 20px; flex-shrink: 0; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider { position: absolute; cursor: pointer; inset: 0; background: var(--border); border-radius: 20px; transition: background .2s; }
+    .toggle-slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background: var(--white); border-radius: 50%; transition: transform .2s; box-shadow: 0 1px 3px rgba(0,0,0,.18); }
+    input:checked + .toggle-slider { background: var(--copper); }
+    input:checked + .toggle-slider:before { transform: translateX(16px); }
+
     /* ── Simulador Conciliação ── */
     .sim-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .75rem; margin-bottom: 1.25rem; }
     .sim-field { display: flex; flex-direction: column; gap: .35rem; }
@@ -284,7 +298,7 @@
       </div>
     </div>
 
-    <!-- 2. Valor Líquido Santander ──────────────────────────────────────────
+    <!-- 3. Valor Líquido Santander ──────────────────────────────────────────
          Tabela de referência calculada automaticamente com base nos fatores
          e taxas de retenção atuais, usando R$ 1.000,00 como base.
          Mostra quanto a empresa recebe de cada modalidade por real financiado.
@@ -457,6 +471,45 @@
       </div>
     </div>
 
+    <!-- Opções de Pagamento ──────────────────────────────────────────────────
+         Habilita ou desabilita cada forma de pagamento no simulador.
+         Formas desabilitadas não são exibidas para o cliente.
+    ──────────────────────────────────────────────────────────────────────── -->
+    <div class="section-card">
+      <div class="section-card-header">
+        <h2>Opções de Pagamento</h2>
+        <p>Habilite ou desabilite formas de pagamento no simulador</p>
+      </div>
+      <div class="section-card-body">
+        <div class="opt-grid">
+          <div>
+            <div class="opt-group">
+              <div class="opt-group-title">Boleto · Cheque · Dinheiro</div>
+              <div id="opt-boleto"></div>
+            </div>
+            <div class="opt-group">
+              <div class="opt-group-title">Santander — Com entrada</div>
+              <div id="opt-sant-com"></div>
+            </div>
+            <div class="opt-group">
+              <div class="opt-group-title">Cartão Visa · Mastercard</div>
+              <div id="opt-cartao"></div>
+            </div>
+          </div>
+          <div>
+            <div class="opt-group">
+              <div class="opt-group-title">Santander — Sem entrada · 30d</div>
+              <div id="opt-sant30"></div>
+            </div>
+            <div class="opt-group">
+              <div class="opt-group-title">Santander — Sem entrada · 60d</div>
+              <div id="opt-sant60"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <div class="bottom-bar">
@@ -607,6 +660,27 @@
     document.getElementById('sim-kpi-pct').textContent        = fmtP(r.liquido / valor);
 
     document.getElementById('sim-result').classList.add('show');
+  }
+
+  // ── Opções de pagamento ──────────────────────────────────────────────────────
+  function buildToggles(containerId, labels, values) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    el.innerHTML = labels.map((lbl, i) => `
+      <div class="toggle-row">
+        <span class="toggle-label">${lbl}</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="${containerId}-${i}" ${values[i] !== false ? 'checked' : ''}>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>`).join('');
+  }
+
+  function readToggles(containerId, count) {
+    return Array.from({length: count}, (_, i) => {
+      const el = document.getElementById(`${containerId}-${i}`);
+      return el ? el.checked : true;
+    });
   }
 
   // ── Autenticação ─────────────────────────────────────────────────────────────
@@ -778,6 +852,19 @@
         </tr>`;
     });
 
+    // Opções de pagamento
+    const hab = cfg.habilitados || {};
+    buildToggles('opt-boleto',   ['À vista (1×)','2× Boleto','3× Boleto','4× Boleto','5× Boleto'],
+      hab.boleto      ?? Array(5).fill(true));
+    buildToggles('opt-sant-com', Array.from({length:7},(_,i)=>`${i+6}× Santander`),
+      hab.santanderCom ?? Array(7).fill(true));
+    buildToggles('opt-sant30',   Array.from({length:10},(_,i)=>`${i+3}× Santander 30d`),
+      hab.santander30  ?? Array(10).fill(true));
+    buildToggles('opt-sant60',   Array.from({length:10},(_,i)=>`${i+3}× Santander 60d`),
+      hab.santander60  ?? Array(10).fill(true));
+    buildToggles('opt-cartao',   ['Débito','Crédito à vista','2× Crédito','3× Crédito','4× Crédito','5× Crédito'],
+      hab.cartao       ?? Array(6).fill(true));
+
     document.getElementById('save-status').textContent = '';
     buildLiquidoTable(cfg);
   }
@@ -831,6 +918,14 @@
       const v = inp?.value.trim() !== '' ? parseFloat(inp.value) : NaN;
       cfg.cartao.push(isNaN(v) ? cur.cartao[i] : v / 100);
     }
+
+    cfg.habilitados = {
+      boleto:       readToggles('opt-boleto',   5),
+      santanderCom: readToggles('opt-sant-com', 7),
+      santander30:  readToggles('opt-sant30',  10),
+      santander60:  readToggles('opt-sant60',  10),
+      cartao:       readToggles('opt-cartao',   6),
+    };
 
     const now = new Date();
     cfg._updatedAt = now.toISOString(); // timestamp usado no aviso de atualização

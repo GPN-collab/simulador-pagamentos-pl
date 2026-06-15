@@ -406,6 +406,7 @@
     (cfg.santander60 ?? DEFAULTS.santander60).forEach((v, i) => FSant60[i+1] = v);
     window._cfgBoleto = cfg.boleto ?? DEFAULTS.boleto;
     window._cfgCartao = cfg.cartao ?? DEFAULTS.cartao;
+    window._cfgHab    = cfg.habilitados || {};
   }
   reloadCfg();
 
@@ -815,23 +816,35 @@
     if(!validateDates(dE,dP,valor,semEntrada)) return;
     cardCtr=0;
 
+    const hab = window._cfgHab || {};
+
     // Boleto: aparece apenas no modo "com entrada" (à vista, 2×, 3×, 4×, 5×)
     const bLabels={1:'À vista',2:'2× Boleto',3:'3× Boleto',4:'4× Boleto',5:'5× Boleto'};
-    let bC=''; if(!semEntrada) for(let n=1;n<=5;n++) bC+=renderBoleto(valor,n,semEntrada,bLabels[n],dE,dP);
+    let bC='';
+    if(!semEntrada) for(let n=1;n<=5;n++) {
+      if(hab.boleto?.[n-1]!==false) bC+=renderBoleto(valor,n,semEntrada,bLabels[n],dE,dP);
+    }
 
     // Santander: sem entrada começa em 3×; com entrada começa em 6×
-    let sC=''; for(let n=semEntrada?3:6;n<=12;n++) sC+=renderSantander(valor,n,semEntrada,dE,dP,fatores);
+    let sC='';
+    for(let n=semEntrada?3:6;n<=12;n++) {
+      const habKey = !semEntrada ? 'santanderCom' : (modo==='sem60' ? 'santander60' : 'santander30');
+      const habIdx = !semEntrada ? n-6 : n-3;
+      if(hab[habKey]?.[habIdx]!==false) sC+=renderSantander(valor,n,semEntrada,dE,dP,fatores);
+    }
 
     // Cartão: débito, crédito à vista, 2× a 5×
     const ops=[
-      {label:'Débito',         desc:_cfgCartao[0], n:1},
-      {label:'Crédito à vista',desc:_cfgCartao[1], n:1},
-      {label:'2× Crédito',    desc:_cfgCartao[2], n:2},
-      {label:'3× Crédito',    desc:_cfgCartao[3], n:3},
-      {label:'4× Crédito',    desc:_cfgCartao[4], n:4},
-      {label:'5× Crédito',    desc:_cfgCartao[5], n:5}
+      {label:'Débito',         desc:_cfgCartao[0], n:1, hi:0},
+      {label:'Crédito à vista',desc:_cfgCartao[1], n:1, hi:1},
+      {label:'2× Crédito',    desc:_cfgCartao[2], n:2, hi:2},
+      {label:'3× Crédito',    desc:_cfgCartao[3], n:3, hi:3},
+      {label:'4× Crédito',    desc:_cfgCartao[4], n:4, hi:4},
+      {label:'5× Crédito',    desc:_cfgCartao[5], n:5, hi:5}
     ];
-    let cC=''; for(const o of ops) cC+=renderCartao(valor,o.label,o.desc,o.n,dE,dP);
+    let cC=''; for(const o of ops) {
+      if(hab.cartao?.[o.hi]!==false) cC+=renderCartao(valor,o.label,o.desc,o.n,dE,dP);
+    }
 
     el.innerHTML=`
       ${bC ? `<div class="section s-boleto">
