@@ -861,8 +861,8 @@
     const hab = window._cfgHab || {};
 
     // Boleto: aparece apenas no modo "com entrada" (à vista, 2×–12×)
-    const bLabels={1:'À vista',2:'1+2 Boleto',3:'1+3 Boleto',4:'1+4 Boleto',5:'1+5 Boleto',
-      6:'1+6 Boleto',7:'1+7 Boleto',8:'1+8 Boleto',9:'1+9 Boleto',10:'1+10 Boleto',11:'1+11 Boleto',12:'1+12 Boleto'};
+    const bLabels={1:'À vista',2:'1+1 Boleto',3:'1+2 Boleto',4:'1+3 Boleto',5:'1+4 Boleto',
+      6:'1+5 Boleto',7:'1+6 Boleto',8:'1+7 Boleto',9:'1+8 Boleto',10:'1+9 Boleto',11:'1+10 Boleto',12:'1+11 Boleto'};
     let bC='';
     if(!semEntrada) for(let n=1;n<=12;n++) {
       if(hab.boleto?.[n-1]!==false) bC+=renderBoleto(valor,n,semEntrada,bLabels[n],dE,dP);
