@@ -278,12 +278,12 @@
               <option value="10">10×</option>
               <option value="11">11×</option>
               <option value="12" selected>12×</option>
-              <option value="13">13×</option>
-              <option value="14">14×</option>
-              <option value="15">15×</option>
-              <option value="16">16×</option>
-              <option value="17">17×</option>
-              <option value="18">18×</option>
+              <option value="13" style="display:none">13×</option>
+              <option value="14" style="display:none">14×</option>
+              <option value="15" style="display:none">15×</option>
+              <option value="16" style="display:none">16×</option>
+              <option value="17" style="display:none">17×</option>
+              <option value="18" style="display:none">18×</option>
             </select>
           </div>
           <div class="sim-field">
@@ -723,9 +723,9 @@
     if (!confirm('Restaurar os padrões de habilitação? Os toggles voltarão aos valores originais (alterações não salvas serão perdidas).')) return;
     const dh = DEFAULTS.habilitados;
     buildToggles('opt-boleto',   Array.from({length:12},(_,i)=>`${i+1}× Boleto`),                  dh.boleto);
-    buildToggles('opt-sant-com', Array.from({length:18},(_,i)=>`${i+1}× Santander`),               dh.santanderCom);
-    buildToggles('opt-sant30',   Array.from({length:18},(_,i)=>`${i+1}× Santander 30d`),           dh.santander30);
-    buildToggles('opt-sant60',   Array.from({length:18},(_,i)=>`${i+1}× Santander 60d`),           dh.santander60);
+    buildToggles('opt-sant-com', Array.from({length:12},(_,i)=>`${i+1}× Santander`),               dh.santanderCom);
+    buildToggles('opt-sant30',   Array.from({length:12},(_,i)=>`${i+1}× Santander 30d`),           dh.santander30);
+    buildToggles('opt-sant60',   Array.from({length:12},(_,i)=>`${i+1}× Santander 60d`),           dh.santander60);
     buildToggles('opt-cartao',   CARTAO_LABELS,                                                     dh.cartao);
   }
 
@@ -861,10 +861,11 @@
     const fmtPrev    = v => v != null ? parseFloat(Number(v).toFixed(13)).toString() : '—';
     const fmtPrevPct = v => v != null ? (v*100).toFixed(2) : '—';
 
-    // Santander 30d rows
+    // Santander 30d rows (apenas 1×–12×; 13×–18× ocultos)
     const sb = document.getElementById('sant-body');
     sb.innerHTML = '';
     fullSant.forEach((val, i) => {
+      if (i >= 12) return;
       const n = i + 1;
       sb.innerHTML += `
         <tr>
@@ -880,10 +881,11 @@
         </tr>`;
     });
 
-    // Santander 60d rows (com entrada não usa fatores 60d → coluna mostra —)
+    // Santander 60d rows (apenas 1×–12×; 13×–18× ocultos)
     const sb60 = document.getElementById('sant60-body');
     sb60.innerHTML = '';
     fullSant60.forEach((val, i) => {
+      if (i >= 12) return;
       const n = i + 1;
       sb60.innerHTML += `
         <tr>
@@ -939,12 +941,12 @@
     buildToggles('opt-boleto',
       ['À vista (1×)','2× Boleto','3× Boleto','4× Boleto','5× Boleto','6× Boleto','7× Boleto','8× Boleto','9× Boleto','10× Boleto','11× Boleto','12× Boleto'],
       habPad('boleto', 12));
-    buildToggles('opt-sant-com', Array.from({length:18},(_,i)=>`${i+1}× Santander`),
-      habPad('santanderCom', 18));
-    buildToggles('opt-sant30',   Array.from({length:18},(_,i)=>`${i+1}× Santander 30d`),
-      habPad('santander30', 18));
-    buildToggles('opt-sant60',   Array.from({length:18},(_,i)=>`${i+1}× Santander 60d`),
-      habPad('santander60', 18));
+    buildToggles('opt-sant-com', Array.from({length:12},(_,i)=>`${i+1}× Santander`),
+      habPad('santanderCom', 12));
+    buildToggles('opt-sant30',   Array.from({length:12},(_,i)=>`${i+1}× Santander 30d`),
+      habPad('santander30', 12));
+    buildToggles('opt-sant60',   Array.from({length:12},(_,i)=>`${i+1}× Santander 60d`),
+      habPad('santander60', 12));
     buildToggles('opt-cartao',
       ['Débito','Crédito à vista','2× Crédito','3× Crédito','4× Crédito','5× Crédito','6× Crédito','7× Crédito','8× Crédito','9× Crédito','10× Crédito','11× Crédito','12× Crédito'],
       habPad('cartao', 13));
@@ -1003,11 +1005,13 @@
       cfg.cartao.push(isNaN(v) ? (cur.cartao?.[i] ?? DEFAULTS.cartao[i]) : v / 100);
     }
 
+    const hiddenSant = (key) => Array.from({length:6}, (_,i) =>
+      cur.habilitados?.[key]?.[12+i] ?? DEFAULTS.habilitados[key][12+i]);
     cfg.habilitados = {
       boleto:       readToggles('opt-boleto',   12),
-      santanderCom: readToggles('opt-sant-com', 18),
-      santander30:  readToggles('opt-sant30',   18),
-      santander60:  readToggles('opt-sant60',   18),
+      santanderCom: [...readToggles('opt-sant-com', 12), ...hiddenSant('santanderCom')],
+      santander30:  [...readToggles('opt-sant30',   12), ...hiddenSant('santander30')],
+      santander60:  [...readToggles('opt-sant60',   12), ...hiddenSant('santander60')],
       cartao:       readToggles('opt-cartao',   13),
     };
 

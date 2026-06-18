@@ -275,7 +275,7 @@
   <div class="input-panel">
     <div class="input-panel-top">
       <div class="field-group">
-        <span class="field-label">Valor do Orçamento</span>
+        <span class="field-label">Valor do Orçamento / Valor de <u>Tabela</u></span>
         <div class="valor-wrapper">
           <span class="valor-prefix">R$</span>
           <!-- Máscara monetária aplicada via JS: formata automaticamente em R$ 1.234,56 -->
@@ -779,7 +779,7 @@
     const proxMes = new Date(hoje);
     proxMes.setMonth(proxMes.getMonth() + 1);
 
-    const maxEntrada = new Date(hoje); maxEntrada.setDate(maxEntrada.getDate() + 10);
+    const maxEntrada = new Date(hoje); maxEntrada.setDate(maxEntrada.getDate() + 6);
     document.getElementById('dataEntradaNative').min = fmtISO(hoje);
     document.getElementById('dataEntradaNative').max = fmtISO(maxEntrada);
 
@@ -807,10 +807,10 @@
         entradaErr.classList.add('visible'); entradaInp.classList.add('error'); valid = false;
       } else {
         const _hoje = new Date(); _hoje.setHours(0,0,0,0);
-        const _max  = new Date(_hoje); _max.setDate(_max.getDate() + 10);
+        const _max  = new Date(_hoje); _max.setDate(_max.getDate() + 6);
         const _dE   = new Date(dE);   _dE.setHours(0,0,0,0);
         if (_dE > _max) {
-          entradaErr.textContent = 'Data máxima: hoje + 10 dias';
+          entradaErr.textContent = 'Data máxima: hoje + 6 dias';
           entradaErr.classList.add('visible'); entradaInp.classList.add('error'); valid = false;
         } else {
           entradaErr.classList.remove('visible'); entradaInp.classList.remove('error');
@@ -920,8 +920,28 @@
 
   // Recalcula ao mudar o modo (com entrada / sem entrada)
   function syncEntradaVisibility() {
-    const semEntrada = document.querySelector('input[name="modo"]:checked').value !== 'com';
+    const modo = document.querySelector('input[name="modo"]:checked').value;
+    const semEntrada = modo !== 'com';
     document.getElementById('entradaGroup').style.display = semEntrada ? 'none' : '';
+
+    const hoje = new Date(); hoje.setHours(0,0,0,0);
+    function fmtBR(d) {
+      return String(d.getDate()).padStart(2,'0') + '/' +
+             String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear();
+    }
+    function fmtISO(d) {
+      return d.getFullYear() + '-' +
+             String(d.getMonth()+1).padStart(2,'0') + '-' +
+             String(d.getDate()).padStart(2,'0');
+    }
+    const novaDp = new Date(hoje);
+    if (modo === 'sem60') {
+      novaDp.setDate(novaDp.getDate() + 60);
+    } else {
+      novaDp.setMonth(novaDp.getMonth() + 1);
+    }
+    document.getElementById('dataParcela').value = fmtBR(novaDp);
+    document.getElementById('dataParcelaNative').value = fmtISO(novaDp);
   }
   document.querySelectorAll('input[name="modo"]').forEach(r => r.addEventListener('change', () => { syncEntradaVisibility(); atualizar(); }));
   syncEntradaVisibility();
