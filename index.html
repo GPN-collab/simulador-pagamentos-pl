@@ -578,7 +578,7 @@
       [`Entrada <strong>${fmt(entrada)}</strong>`,`${n-1}× de <strong>${fmt(pm)}</strong>`];
     const pct=((1-data.total/valor)*100).toFixed(1).replace('.',',');
     const badge=`↓ ${pct}% desconto`;
-    const sanLabel = semEntrada ? `${n}× Santander` : `1+${n} Santander`;
+    const sanLabel = semEntrada ? `${n}× Santander` : `1+${n-1} Santander`;
     return buildCard(sanLabel,badge,'badge-santan',data.total,lines,data,getDates(dE,dP,data.parcelas,semEntrada),`c${++cardCtr}`);
   }
 
