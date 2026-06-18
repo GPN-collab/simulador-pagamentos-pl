@@ -578,7 +578,8 @@
       [`Entrada <strong>${fmt(entrada)}</strong>`,`${n-1}× de <strong>${fmt(pm)}</strong>`];
     const pct=((1-data.total/valor)*100).toFixed(1).replace('.',',');
     const badge=`↓ ${pct}% desconto`;
-    return buildCard(`${n}× Santander`,badge,'badge-santan',data.total,lines,data,getDates(dE,dP,data.parcelas,semEntrada),`c${++cardCtr}`);
+    const sanLabel = semEntrada ? `${n}× Santander` : `1+${n} Santander`;
+    return buildCard(sanLabel,badge,'badge-santan',data.total,lines,data,getDates(dE,dP,data.parcelas,semEntrada),`c${++cardCtr}`);
   }
 
   // Renderiza um card de cartão (débito, crédito à vista, 2× a 5×)
@@ -778,7 +779,7 @@
     const proxMes = new Date(hoje);
     proxMes.setMonth(proxMes.getMonth() + 1);
 
-    const maxEntrada = new Date(hoje); maxEntrada.setDate(maxEntrada.getDate() + 6);
+    const maxEntrada = new Date(hoje); maxEntrada.setDate(maxEntrada.getDate() + 10);
     document.getElementById('dataEntradaNative').min = fmtISO(hoje);
     document.getElementById('dataEntradaNative').max = fmtISO(maxEntrada);
 
@@ -806,10 +807,10 @@
         entradaErr.classList.add('visible'); entradaInp.classList.add('error'); valid = false;
       } else {
         const _hoje = new Date(); _hoje.setHours(0,0,0,0);
-        const _max  = new Date(_hoje); _max.setDate(_max.getDate() + 6);
+        const _max  = new Date(_hoje); _max.setDate(_max.getDate() + 10);
         const _dE   = new Date(dE);   _dE.setHours(0,0,0,0);
         if (_dE > _max) {
-          entradaErr.textContent = 'Data máxima: hoje + 6 dias';
+          entradaErr.textContent = 'Data máxima: hoje + 10 dias';
           entradaErr.classList.add('visible'); entradaInp.classList.add('error'); valid = false;
         } else {
           entradaErr.classList.remove('visible'); entradaInp.classList.remove('error');
@@ -860,8 +861,8 @@
     const hab = window._cfgHab || {};
 
     // Boleto: aparece apenas no modo "com entrada" (à vista, 2×–12×)
-    const bLabels={1:'À vista',2:'2× Boleto',3:'3× Boleto',4:'4× Boleto',5:'5× Boleto',
-      6:'6× Boleto',7:'7× Boleto',8:'8× Boleto',9:'9× Boleto',10:'10× Boleto',11:'11× Boleto',12:'12× Boleto'};
+    const bLabels={1:'À vista',2:'1+2 Boleto',3:'1+3 Boleto',4:'1+4 Boleto',5:'1+5 Boleto',
+      6:'1+6 Boleto',7:'1+7 Boleto',8:'1+8 Boleto',9:'1+9 Boleto',10:'1+10 Boleto',11:'1+11 Boleto',12:'1+12 Boleto'};
     let bC='';
     if(!semEntrada) for(let n=1;n<=12;n++) {
       if(hab.boleto?.[n-1]!==false) bC+=renderBoleto(valor,n,semEntrada,bLabels[n],dE,dP);
