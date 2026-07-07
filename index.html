@@ -259,9 +259,135 @@
     #export-loading .spinner { background: var(--white); border-radius: 14px; padding: 2rem 2.5rem; text-align: center; font-size: 0.85rem; color: var(--stone); font-weight: 500; }
     #export-loading .spinner::before { content: ''; display: block; width: 28px; height: 28px; margin: 0 auto 1rem; border: 2.5px solid var(--cream-mid); border-top-color: var(--copper); border-radius: 50%; animation: spin .7s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Dialog: campanha "Liquida Prima Linea" ── */
+    #campanha-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(28,26,25,.6);
+      z-index: 10000; align-items: center; justify-content: center; padding: 1.5rem;
+    }
+    #campanha-overlay.visible { display: flex; }
+    .campanha-modal {
+      background: var(--white); border-radius: 18px; max-width: 620px; width: 100%;
+      max-height: 88vh; overflow-y: auto; position: relative;
+      box-shadow: 0 20px 60px rgba(28,26,25,.35);
+    }
+    .campanha-hero {
+      background: linear-gradient(135deg, var(--espresso), var(--copper-dk));
+      padding: 2.2rem 2.2rem 1.6rem; border-radius: 18px 18px 0 0; color: var(--white);
+      position: relative;
+    }
+    .campanha-close {
+      position: absolute; top: 1rem; right: 1.1rem; background: rgba(255,255,255,.15);
+      border: none; color: var(--white); width: 28px; height: 28px; border-radius: 50%;
+      cursor: pointer; font-size: 1rem; line-height: 1; display: flex; align-items: center;
+      justify-content: center; transition: background .15s;
+    }
+    .campanha-close:hover { background: rgba(255,255,255,.3); }
+    .campanha-kicker {
+      font-size: 0.68rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.2em;
+      color: var(--caramel); margin-bottom: 0.6rem;
+    }
+    .campanha-title {
+      font-family: 'Cormorant Garamond', serif; font-weight: 500; font-size: 1.55rem;
+      line-height: 1.35; color: var(--white); max-width: 480px;
+    }
+    .campanha-body { padding: 1.8rem 2.2rem 2.2rem; color: var(--ink-mid); font-size: 0.88rem; line-height: 1.65; }
+    .campanha-body p { margin-bottom: 1rem; }
+    .campanha-section-ttl {
+      font-size: 0.68rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.14em;
+      color: var(--copper); margin: 1.6rem 0 0.7rem;
+    }
+    .campanha-check { list-style: none; margin-bottom: 1rem; }
+    .campanha-check li { padding-left: 1.4rem; position: relative; margin-bottom: 0.35rem; }
+    .campanha-check li::before { content: '✔️'; position: absolute; left: 0; font-size: 0.75rem; }
+    .campanha-example {
+      background: var(--cream); border: 1px solid var(--border); border-radius: 12px;
+      padding: 1rem 1.2rem; margin-bottom: 1rem;
+    }
+    .campanha-example .ex-title { font-weight: 500; color: var(--ink); margin-bottom: 0.6rem; font-size: 0.85rem; }
+    .campanha-example .ex-row { display: flex; justify-content: space-between; font-size: 0.82rem; padding: 0.22rem 0; }
+    .campanha-example .ex-row span:first-child { color: var(--stone); }
+    .campanha-example .ex-row span:last-child { font-weight: 500; color: var(--ink); }
+    .campanha-example .ex-row.final span:last-child { color: var(--copper-dk); font-weight: 600; }
+    .campanha-premio {
+      background: var(--cream); border: 1px solid var(--border); border-radius: 12px;
+      padding: 0.9rem 1.1rem; margin-bottom: 0.7rem;
+    }
+    .campanha-premio .p-role { font-weight: 600; color: var(--ink); font-size: 0.82rem; margin-bottom: 0.3rem; }
+    .campanha-premio .p-val { font-size: 0.82rem; color: var(--ink-mid); }
+    .campanha-periodo {
+      display: flex; align-items: center; gap: 0.5rem; background: rgba(166,123,91,.1);
+      border-radius: 10px; padding: 0.7rem 1rem; font-size: 0.82rem; color: var(--copper-dk);
+      font-weight: 500; margin: 1.4rem 0 1.2rem;
+    }
+    .campanha-closing { font-style: italic; font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; color: var(--ink-mid); line-height: 1.5; }
+    .campanha-actions { display: flex; justify-content: flex-end; margin-top: 1.6rem; }
+    .campanha-btn {
+      background: var(--ink); color: var(--white); border: none; border-radius: 999px;
+      padding: 0.7rem 1.8rem; font-size: 0.8rem; font-weight: 500; cursor: pointer;
+      letter-spacing: 0.03em; transition: background .15s; font-family: 'Inter', sans-serif;
+    }
+    .campanha-btn:hover { background: var(--copper-dk); }
   </style>
 </head>
 <body>
+
+<!-- Dialog exibida automaticamente ao abrir o simulador: campanha "Liquida Prima Linea" -->
+<div id="campanha-overlay">
+  <div class="campanha-modal">
+    <div class="campanha-hero">
+      <button type="button" class="campanha-close" onclick="fecharCampanha()" aria-label="Fechar">✕</button>
+      <div class="campanha-kicker">Liquida Prima Linea · Julho 2026</div>
+      <div class="campanha-title">Chegou a hora de acelerar as vendas e transformar oportunidades em resultados!</div>
+    </div>
+    <div class="campanha-body">
+      <p>Durante o mês de julho, teremos uma campanha especial para impulsionar as vendas dos produtos de fabricação própria da Prima Linea. É a chance perfeita para oferecer ainda mais vantagens aos clientes e conquistar uma excelente premiação.</p>
+
+      <div class="campanha-section-ttl">Como funciona?</div>
+      <p>Todos os produtos do <strong>Fornecedor 50</strong> estarão com <strong>10% de desconto extra</strong>, já aplicado automaticamente no Esatto.</p>
+      <ul class="campanha-check">
+        <li>Válido para toda a linha de fabricação própria.</li>
+        <li>Desconto válido para todas as formas de pagamento.</li>
+      </ul>
+
+      <div class="campanha-section-ttl">Exemplo</div>
+      <div class="campanha-example">
+        <div class="ex-title">JF81 – Cadeira Juá com Braço | Tecido 5</div>
+        <div class="ex-row"><span>Valor de tabela</span><span>R$ 2.803</span></div>
+        <div class="ex-row"><span>Valor Líquida Prima Linea (10%)</span><span>R$ 2.522</span></div>
+        <div class="ex-row"><span>À vista (+20%)</span><span>R$ 2.018</span></div>
+        <div class="ex-row final"><span>Margem (+3%)</span><span>R$ 1.957</span></div>
+      </div>
+
+      <div class="campanha-section-ttl">🏆 Premiação</div>
+
+      <div class="campanha-premio">
+        <div class="p-role">Gerente (por praça)</div>
+        <div class="p-val">O gerente que mais vender produtos do Fornecedor 50 receberá: 💰 R$ 2.500 + 1 garrafa de vinho Cartuxa (Safra 2021)</div>
+      </div>
+
+      <div class="campanha-premio">
+        <div class="p-role">Vendedores (por praça)</div>
+        <div class="p-val">🥇 1º lugar: R$ 2.000 &nbsp;·&nbsp; 🥈 2º lugar: R$ 1.000 &nbsp;·&nbsp; 🥉 3º lugar: R$ 500</div>
+      </div>
+
+      <div class="campanha-premio">
+        <div class="p-role">Decoradoras (por praça)</div>
+        <div class="p-val">A decoradora que mais vender produtos do Fornecedor 50 ganhará R$ 2.000.</div>
+      </div>
+
+      <div class="campanha-periodo">📅 Período da campanha: de 06/07/2026 a 31/07/2026</div>
+
+      <p>Este é o momento de mostrar a força da nossa fabricação própria, destacar o design e a qualidade dos nossos produtos e entregar ainda mais valor aos clientes.</p>
+      <p>Cada atendimento é uma oportunidade. Cada orçamento pode se transformar em uma venda. Cada venda aproxima você da premiação.</p>
+      <p class="campanha-closing">Vamos juntos fazer do "Liquida Prima Linea" um grande sucesso. Boas vendas e boa sorte a todos! 🚀</p>
+
+      <div class="campanha-actions">
+        <button type="button" class="campanha-btn" onclick="fecharCampanha()">Entendi</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <header>
   <div class="header-logo">Prima Linea</div>
@@ -945,6 +1071,16 @@
   }
   document.querySelectorAll('input[name="modo"]').forEach(r => r.addEventListener('change', () => { syncEntradaVisibility(); atualizar(); }));
   syncEntradaVisibility();
+
+  // ── Dialog da campanha "Liquida Prima Linea" ────────────────────────────────
+  // Exibida automaticamente toda vez que o simulador é aberto.
+  function fecharCampanha() {
+    document.getElementById('campanha-overlay').classList.remove('visible');
+  }
+  document.getElementById('campanha-overlay').addEventListener('click', function(e) {
+    if (e.target === this) fecharCampanha();
+  });
+  document.getElementById('campanha-overlay').classList.add('visible');
 </script>
 </body>
 </html>
