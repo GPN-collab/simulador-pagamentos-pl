@@ -314,27 +314,25 @@
     .campanha-check { list-style: none; margin-bottom: 1rem; }
     .campanha-check li { padding-left: 1.4rem; position: relative; margin-bottom: 0.35rem; }
     .campanha-check li::before { content: '✔️'; position: absolute; left: 0; font-size: 0.75rem; }
-    .campanha-example {
-      background: var(--cream); border: 1px solid var(--border); border-radius: 12px;
-      padding: 1rem 1.2rem; margin-bottom: 1rem;
-    }
-    .campanha-example .ex-title { font-weight: 500; color: var(--ink); margin-bottom: 0.6rem; font-size: 0.85rem; }
-    .campanha-example .ex-row { display: flex; justify-content: space-between; font-size: 0.82rem; padding: 0.22rem 0; }
-    .campanha-example .ex-row span:first-child { color: var(--stone); }
-    .campanha-example .ex-row span:last-child { font-weight: 500; color: var(--ink); }
-    .campanha-example .ex-row.final span:last-child { color: var(--copper-dk); font-weight: 600; }
-    .campanha-premio {
-      background: var(--cream); border: 1px solid var(--border); border-radius: 12px;
-      padding: 0.9rem 1.1rem; margin-bottom: 0.7rem;
-    }
-    .campanha-premio .p-role { font-weight: 600; color: var(--ink); font-size: 0.82rem; margin-bottom: 0.3rem; }
-    .campanha-premio .p-val { font-size: 0.82rem; color: var(--ink-mid); }
     .campanha-periodo {
       display: flex; align-items: center; gap: 0.5rem; background: rgba(166,123,91,.1);
       border-radius: 10px; padding: 0.7rem 1rem; font-size: 0.82rem; color: var(--copper-dk);
       font-weight: 500; margin: 1.4rem 0 1.2rem;
     }
     .campanha-closing { font-style: italic; font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; color: var(--ink-mid); line-height: 1.5; }
+    .campanha-fornecedores-table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; font-size: 0.8rem; }
+    .campanha-fornecedores-table th {
+      background: var(--cream); color: var(--copper-dk); text-transform: uppercase;
+      font-size: 0.64rem; letter-spacing: 0.08em; font-weight: 600; padding: 0.55rem 0.6rem;
+      border: 1px solid var(--border); text-align: left;
+    }
+    .campanha-fornecedores-table td { padding: 0.5rem 0.6rem; border: 1px solid var(--border); color: var(--ink-mid); }
+    .campanha-fornecedores-table tr:nth-child(even) { background: rgba(28,26,25,.02); }
+    .campanha-alert {
+      background: rgba(166,123,91,.08); border: 1px solid rgba(166,123,91,.3); border-left: 3px solid var(--copper);
+      border-radius: 10px; padding: 0.9rem 1.1rem; margin: 1.4rem 0 1.2rem; font-size: 0.85rem; color: var(--ink);
+    }
+    .campanha-alert strong { color: var(--copper-dk); }
     .campanha-actions { display: flex; justify-content: flex-end; margin-top: 1.6rem; }
     .campanha-btn {
       background: var(--ink); color: var(--white); border: none; border-radius: 999px;
@@ -355,45 +353,37 @@
       <div class="campanha-title">Chegou a hora de acelerar as vendas e transformar oportunidades em resultados!</div>
     </div>
     <div class="campanha-body">
-      <p>Durante o mês de julho, teremos uma campanha especial para impulsionar as vendas dos produtos de fabricação própria da Prima Linea. É a chance perfeita para oferecer ainda mais vantagens aos clientes e conquistar uma excelente premiação.</p>
+      <p>Durante o mês de julho, teremos uma campanha especial para impulsionar as vendas dos produtos de fabricação própria da Prima Linea e de alguns fornecedores.</p>
 
       <div class="campanha-section-ttl">Como funciona?</div>
       <p>Todos os produtos do <strong>Fornecedor 50</strong> estarão com <strong>10% de desconto extra</strong>, já aplicado automaticamente no Esatto.</p>
+      <p>Segue a lista dos fornecedores e seus respectivos descontos, também já aplicados no Esatto:</p>
+
+      <table class="campanha-fornecedores-table">
+        <thead>
+          <tr><th>Fornecedores</th><th>Descontos extras</th><th>Linhas de produtos</th><th>Datas de encerramento</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Du Design</td><td>5%</td><td>Todas as linhas</td><td>30/08/2026</td></tr>
+          <tr><td>Tissot / Versare</td><td>5%</td><td>Todas as linhas</td><td>01/09/2026</td></tr>
+          <tr><td>Alfa Vidros</td><td>5%</td><td>Todas as linhas</td><td>30/08/2026</td></tr>
+          <tr><td rowspan="2">CBP</td><td>5%</td><td>New York e Portland</td><td>20/07/2026</td></tr>
+          <tr><td>10%</td><td>Beauty</td><td>20/07/2026</td></tr>
+          <tr><td>Iummi</td><td>4%</td><td>Todas as linhas</td><td>31/08/2026</td></tr>
+        </tbody>
+      </table>
+
       <ul class="campanha-check">
         <li>Válido para toda a linha de fabricação própria.</li>
         <li>Desconto válido para todas as formas de pagamento.</li>
       </ul>
 
-      <div class="campanha-section-ttl">Exemplo</div>
-      <div class="campanha-example">
-        <div class="ex-title">JF81 – Cadeira Juá com Braço | Tecido 5</div>
-        <div class="ex-row"><span>Valor de tabela</span><span>R$ 2.803</span></div>
-        <div class="ex-row"><span>Valor Líquida Prima Linea (10%)</span><span>R$ 2.522</span></div>
-        <div class="ex-row"><span>À vista (+20%)</span><span>R$ 2.018</span></div>
-        <div class="ex-row final"><span>Margem (+3%)</span><span>R$ 1.957</span></div>
-      </div>
-
-      <div class="campanha-section-ttl">🏆 Premiação</div>
-
-      <div class="campanha-premio">
-        <div class="p-role">Gerente (por praça)</div>
-        <div class="p-val">O gerente que mais vender produtos do Fornecedor 50 receberá: 💰 R$ 2.500 + 1 garrafa de vinho Cartuxa (Safra 2021)</div>
-      </div>
-
-      <div class="campanha-premio">
-        <div class="p-role">Vendedores (por praça)</div>
-        <div class="p-val">🥇 1º lugar: R$ 2.000 &nbsp;·&nbsp; 🥈 2º lugar: R$ 1.000 &nbsp;·&nbsp; 🥉 3º lugar: R$ 500</div>
-      </div>
-
-      <div class="campanha-premio">
-        <div class="p-role">Decoradoras (por praça)</div>
-        <div class="p-val">A decoradora que mais vender produtos do Fornecedor 50 ganhará R$ 2.000.</div>
-      </div>
+      <div class="campanha-alert"><strong>Informação importante:</strong> caro vendedor, aplique o desconto promocional <strong>antes</strong> de lançar a venda no simulador.</div>
 
       <div class="campanha-periodo">📅 Período da campanha: de 06/07/2026 a 31/07/2026</div>
 
       <p>Este é o momento de mostrar a força da nossa fabricação própria, destacar o design e a qualidade dos nossos produtos e entregar ainda mais valor aos clientes.</p>
-      <p>Cada atendimento é uma oportunidade. Cada orçamento pode se transformar em uma venda. Cada venda aproxima você da premiação.</p>
+      <p>Cada atendimento é uma oportunidade. Cada orçamento pode se transformar em uma venda.</p>
       <p class="campanha-closing">Vamos juntos fazer do "Liquida Prima Linea" um grande sucesso. Boas vendas e boa sorte a todos! 🚀</p>
 
       <div class="campanha-actions">
