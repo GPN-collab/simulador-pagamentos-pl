@@ -106,6 +106,10 @@
       color: var(--ink); width: 200px; padding: 0.65rem 0; outline: none; letter-spacing: 0.02em;
     }
     #valor::placeholder { color: var(--cream-mid); }
+    .valor-aviso {
+      font-size: 0.68rem; color: var(--copper-dk); background: rgba(166,123,91,.1);
+      border-radius: 6px; padding: 0.3rem 0.55rem; line-height: 1.4; max-width: 260px;
+    }
 
     /* Campo de data: exibe texto em dd/mm/aaaa; o input nativo (oculto) serve
        apenas para abrir o calendar picker do sistema operacional */
@@ -407,6 +411,7 @@
           <!-- Máscara monetária aplicada via JS: formata automaticamente em R$ 1.234,56 -->
           <input type="text" id="valor" placeholder="0,00" inputmode="numeric" autocomplete="off">
         </div>
+        <span class="valor-aviso">Caro vendedor, aplique o desconto promocional <b>antes</b> de lançar a venda no simulador</span>
       </div>
 
       <div class="field-group" id="entradaGroup">
