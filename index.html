@@ -74,6 +74,16 @@
       flex-direction: column;
       gap: 1.25rem;
     }
+    /* Envolve a linha de campos + aviso: encolhe para a largura do conteúdo
+       (não ocupa o painel inteiro), permitindo que o aviso abaixo termine
+       alinhado com o fim do último campo em vez de esticar até a borda do card. */
+    .input-panel-fields {
+      display: flex;
+      flex-direction: column;
+      align-self: flex-start;
+      gap: 0.75rem;
+      max-width: 100%;
+    }
     .input-panel-top {
       display: flex;
       align-items: flex-end;
@@ -403,6 +413,7 @@
 <div class="container">
   <!-- Painel de entrada: valor, datas e modo de financiamento -->
   <div class="input-panel">
+    <div class="input-panel-fields">
     <div class="input-panel-top">
       <div class="field-group">
         <span class="field-label">Valor do Orçamento / Valor de <u>Tabela</u></span>
@@ -443,6 +454,7 @@
     </div>
 
     <span class="valor-aviso">Caro vendedor, aplique o desconto promocional <b>antes</b> de lançar a venda no simulador</span>
+    </div>
 
     <!-- Seletor de modalidade de financiamento Santander:
          Com entrada = cliente paga 1/n na entrada + n−1 parcelas via Santander (30d)
