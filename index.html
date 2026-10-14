@@ -74,16 +74,6 @@
       flex-direction: column;
       gap: 1.25rem;
     }
-    /* Envolve a linha de campos + aviso: encolhe para a largura do conteúdo
-       (não ocupa o painel inteiro), permitindo que o aviso abaixo termine
-       alinhado com o fim do último campo em vez de esticar até a borda do card. */
-    .input-panel-fields {
-      display: flex;
-      flex-direction: column;
-      align-self: flex-start;
-      gap: 0.75rem;
-      max-width: 100%;
-    }
     .input-panel-top {
       display: flex;
       align-items: flex-end;
@@ -116,10 +106,6 @@
       color: var(--ink); width: 200px; padding: 0.65rem 0; outline: none; letter-spacing: 0.02em;
     }
     #valor::placeholder { color: var(--cream-mid); }
-    .valor-aviso {
-      display: block; font-size: 0.85rem; color: var(--copper-dk); background: rgba(166,123,91,.1);
-      border-radius: 8px; padding: 0.55rem 0.9rem; line-height: 1.5;
-    }
 
     /* Campo de data: exibe texto em dd/mm/aaaa; o input nativo (oculto) serve
        apenas para abrir o calendar picker do sistema operacional */
@@ -273,118 +259,9 @@
     #export-loading .spinner { background: var(--white); border-radius: 14px; padding: 2rem 2.5rem; text-align: center; font-size: 0.85rem; color: var(--stone); font-weight: 500; }
     #export-loading .spinner::before { content: ''; display: block; width: 28px; height: 28px; margin: 0 auto 1rem; border: 2.5px solid var(--cream-mid); border-top-color: var(--copper); border-radius: 50%; animation: spin .7s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ── Dialog: campanha "Liquida Prima Linea" ── */
-    #campanha-overlay {
-      display: none; position: fixed; inset: 0; background: rgba(28,26,25,.6);
-      z-index: 10000; align-items: center; justify-content: center; padding: 1.5rem;
-    }
-    #campanha-overlay.visible { display: flex; }
-    .campanha-modal {
-      background: var(--white); border-radius: 18px; max-width: 620px; width: 100%;
-      max-height: 88vh; overflow-y: auto; position: relative;
-      box-shadow: 0 20px 60px rgba(28,26,25,.35);
-    }
-    .campanha-hero {
-      background: linear-gradient(135deg, var(--espresso), var(--copper-dk));
-      padding: 2.2rem 2.2rem 1.6rem; border-radius: 18px 18px 0 0; color: var(--white);
-      position: relative;
-    }
-    .campanha-close {
-      position: absolute; top: 1rem; right: 1.1rem; background: rgba(255,255,255,.15);
-      border: none; color: var(--white); width: 28px; height: 28px; border-radius: 50%;
-      cursor: pointer; font-size: 1rem; line-height: 1; display: flex; align-items: center;
-      justify-content: center; transition: background .15s;
-    }
-    .campanha-close:hover { background: rgba(255,255,255,.3); }
-    .campanha-kicker {
-      font-size: 0.68rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.2em;
-      color: var(--caramel); margin-bottom: 0.6rem;
-    }
-    .campanha-title {
-      font-family: 'Cormorant Garamond', serif; font-weight: 500; font-size: 1.55rem;
-      line-height: 1.35; color: var(--white); max-width: 480px;
-    }
-    .campanha-body { padding: 1.8rem 2.2rem 2.2rem; color: var(--ink-mid); font-size: 0.88rem; line-height: 1.65; }
-    .campanha-body p { margin-bottom: 1rem; }
-    .campanha-section-ttl {
-      font-size: 0.68rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.14em;
-      color: var(--copper); margin: 1.6rem 0 0.7rem;
-    }
-    .campanha-check { list-style: none; margin-bottom: 1rem; }
-    .campanha-check li { padding-left: 1.4rem; position: relative; margin-bottom: 0.35rem; }
-    .campanha-check li::before { content: '✔️'; position: absolute; left: 0; font-size: 0.75rem; }
-    .campanha-closing { font-style: italic; font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; color: var(--ink-mid); line-height: 1.5; }
-    .campanha-fornecedores-table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; font-size: 0.8rem; }
-    .campanha-fornecedores-table th {
-      background: var(--cream); color: var(--copper-dk); text-transform: uppercase;
-      font-size: 0.64rem; letter-spacing: 0.08em; font-weight: 600; padding: 0.55rem 0.6rem;
-      border: 1px solid var(--border); text-align: left;
-    }
-    .campanha-fornecedores-table td { padding: 0.5rem 0.6rem; border: 1px solid var(--border); color: var(--ink-mid); }
-    .campanha-fornecedores-table tr:nth-child(even) { background: rgba(28,26,25,.02); }
-    .campanha-alert {
-      background: rgba(166,123,91,.08); border: 1px solid rgba(166,123,91,.3); border-left: 3px solid var(--copper);
-      border-radius: 10px; padding: 0.9rem 1.1rem; margin: 1.4rem 0 1.2rem; font-size: 0.85rem; color: var(--ink);
-    }
-    .campanha-alert strong { color: var(--copper-dk); }
-    .campanha-actions { display: flex; justify-content: flex-end; margin-top: 1.6rem; }
-    .campanha-btn {
-      background: var(--ink); color: var(--white); border: none; border-radius: 999px;
-      padding: 0.7rem 1.8rem; font-size: 0.8rem; font-weight: 500; cursor: pointer;
-      letter-spacing: 0.03em; transition: background .15s; font-family: 'Inter', sans-serif;
-    }
-    .campanha-btn:hover { background: var(--copper-dk); }
   </style>
 </head>
 <body>
-
-<!-- Dialog exibida automaticamente ao abrir o simulador: campanha "Liquida Prima Linea" -->
-<div id="campanha-overlay">
-  <div class="campanha-modal">
-    <div class="campanha-hero">
-      <button type="button" class="campanha-close" onclick="fecharCampanha()" aria-label="Fechar">✕</button>
-      <div class="campanha-kicker">Liquida Prima Linea · Julho 2026</div>
-      <div class="campanha-title">Chegou a hora de acelerar as vendas e transformar oportunidades em resultados!</div>
-    </div>
-    <div class="campanha-body">
-      <p>Durante o mês de julho, teremos uma campanha especial para impulsionar as vendas dos produtos de fabricação própria da Prima Linea e de alguns fornecedores.</p>
-
-      <div class="campanha-section-ttl">Como funciona?</div>
-      <p>Todos os produtos do <strong>Fornecedor 50</strong> estarão com <strong>10% de desconto extra</strong>, já aplicado automaticamente no Esatto.</p>
-      <p>Segue a lista dos fornecedores e seus respectivos descontos, também já aplicados no Esatto:</p>
-
-      <table class="campanha-fornecedores-table">
-        <thead>
-          <tr><th>Fornecedores</th><th>Descontos extras</th><th>Linhas de produtos</th><th>Datas de encerramento</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>Du Design</td><td>5%</td><td>Todas as linhas</td><td>30/08/2026</td></tr>
-          <tr><td>Tissot / Versare</td><td>5%</td><td>Todas as linhas</td><td>01/09/2026</td></tr>
-          <tr><td>Alfa Vidros</td><td>5%</td><td>Todas as linhas</td><td>30/08/2026</td></tr>
-          <tr><td rowspan="2">CBP</td><td>5%</td><td>New York e Portland</td><td>20/07/2026</td></tr>
-          <tr><td>10%</td><td>Beauty</td><td>20/07/2026</td></tr>
-          <tr><td>Iummi</td><td>4%</td><td>Todas as linhas</td><td>31/08/2026</td></tr>
-        </tbody>
-      </table>
-
-      <ul class="campanha-check">
-        <li>Válido para toda a linha de fabricação própria.</li>
-        <li>Desconto válido para todas as formas de pagamento.</li>
-      </ul>
-
-      <div class="campanha-alert"><strong>Informação importante:</strong> caro vendedor, aplique o desconto promocional <strong>antes</strong> de lançar a venda no simulador.</div>
-
-      <p>Este é o momento de mostrar a força da nossa fabricação própria, destacar o design e a qualidade dos nossos produtos e entregar ainda mais valor aos clientes.</p>
-      <p>Cada atendimento é uma oportunidade. Cada orçamento pode se transformar em uma venda.</p>
-      <p class="campanha-closing">Vamos juntos fazer do "Liquida Prima Linea" um grande sucesso. Boas vendas e boa sorte a todos! 🚀</p>
-
-      <div class="campanha-actions">
-        <button type="button" class="campanha-btn" onclick="fecharCampanha()">Entendi</button>
-      </div>
-    </div>
-  </div>
-</div>
 
 <header>
   <div class="header-logo">Prima Linea</div>
@@ -396,7 +273,6 @@
 <div class="container">
   <!-- Painel de entrada: valor, datas e modo de financiamento -->
   <div class="input-panel">
-    <div class="input-panel-fields">
     <div class="input-panel-top">
       <div class="field-group">
         <span class="field-label">Valor do Orçamento / Valor de <u>Tabela</u></span>
@@ -434,9 +310,6 @@
         <span class="date-error" id="dateError">Deve ser após a data da entrada</span>
         <span class="date-error" id="parcelaError">Campo obrigatório</span>
       </div>
-    </div>
-
-    <span class="valor-aviso">Caro vendedor, aplique o desconto promocional <b>antes</b> de lançar a venda no simulador</span>
     </div>
 
     <!-- Seletor de modalidade de financiamento Santander:
@@ -1072,16 +945,6 @@
   }
   document.querySelectorAll('input[name="modo"]').forEach(r => r.addEventListener('change', () => { syncEntradaVisibility(); atualizar(); }));
   syncEntradaVisibility();
-
-  // ── Dialog da campanha "Liquida Prima Linea" ────────────────────────────────
-  // Exibida automaticamente toda vez que o simulador é aberto.
-  function fecharCampanha() {
-    document.getElementById('campanha-overlay').classList.remove('visible');
-  }
-  document.getElementById('campanha-overlay').addEventListener('click', function(e) {
-    if (e.target === this) fecharCampanha();
-  });
-  document.getElementById('campanha-overlay').classList.add('visible');
 </script>
 </body>
 </html>
