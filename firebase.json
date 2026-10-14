@@ -6,7 +6,9 @@
       ".firebaserc",
       "pl_config_backup.json",
       ".git/**",
-      ".claude/**"
+      ".claude/**",
+      "node_modules/**",
+      "**/.DS_Store"
     ]
   }
 }
