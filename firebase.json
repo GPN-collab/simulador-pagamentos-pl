@@ -8,6 +8,9 @@
       ".git/**",
       ".claude/**",
       "node_modules/**",
+      "tests/**",
+      "package.json",
+      "package-lock.json",
       "**/.DS_Store"
     ]
   }
